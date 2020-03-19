@@ -96,19 +96,14 @@ function twnicepp_RegisterDomain($params)
     // user defined configuration values
     $userToken = $params['APIToken'];
     $testMode = $params['TestMode'];
+    $authCode = uniqid();
 
     // registration parameters
     $sld = $params['sld'];
     $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
     $registrationPeriod = $params['regperiod'];
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
-    /**
-     * Nameservers.
-     *
-     * If purchased with web hosting, values will be taken from the
-     * assigned web hosting server. Otherwise uses the values specified
-     * during the order process.
-     */
+    // Nameservers
     $nameservers = [];
     if ($params['ns1']) array_push($nameservers, $params['ns1']);
     if ($params['ns2']) array_push($nameservers, $params['ns2']);
@@ -122,34 +117,30 @@ function twnicepp_RegisterDomain($params)
         'email' => $params["email"],
         'phone' => '+'.$params["phonecc"].'.'.$params["phonenumber"],
         'organization' => $params["companyname"],
-        'address' => $params["address1"],
+        'address1' => $params["address1"],
+        'address2' => $params["address2"],
         'zipcode' => $params["postcode"],
         'city' => $params["city"],
         'country' => $params["countrycode"],
         'province' => $params["state"],
         'fax' => $params["fax"],
-        'auth_code' => uniqid(),
+        'auth_code' => $authCode,
     ]);
 
-    /**
-     * Admin contact information.
-     *
-     * Defaults to the same as the client information. Can be configured
-     * to use the web hosts details if the `Use Clients Details` option
-     * is disabled in Setup > General Settings > Domains.
-     */
+    // Admin contact information
     $adminId = createContact($userToken, $testMode, [
         'name' => $params["adminfirstname"].$params["adminlastname"],
         'email' => $params["adminemail"],
         'phone' => '+'.$params["adminphonecc"].'.'.$params["adminphonenumber"],
         'organization' => $params["admincompanyname"],
-        'address' => $params["adminaddress1"],
+        'address1' => $params["adminaddress1"],
+        'address2' => $params["adminaddress2"],
         'zipcode' => $params["adminpostcode"],
         'city' => $params["admincity"],
         'country' => $params["admincountry"],
         'province' => $params["adminstate"],
         'fax' => $params["adminfax"],
-        'auth_code' => uniqid(),
+        'auth_code' => $authCode,
     ]);
 
     // Build post data
@@ -158,15 +149,16 @@ function twnicepp_RegisterDomain($params)
         'domain' => "{$sld}.{$tld}",
         'years' => $registrationPeriod,
         'nameservers' => $nameservers,
-        'auth_code' => uniqid(),
+        'auth_code' => $authCode,
         'lang' => (strpos($params['tld'], '台灣')) ? 'ZH' : 'EN',
         'contact_id' => $registrantId,
     ];
 
     if ($adminId) $postfields['admincontact'] = $adminId;
 
-    if ($registrantId)
+    if (!is_array($registrantId) && $registrantId) {
         $domainCreateUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
+        $domainUpdateUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
         try {
             $api = new ApiClient();
             $api->setUrl($domainCreateUrl);
@@ -174,6 +166,20 @@ function twnicepp_RegisterDomain($params)
 
             $result = [];
             if ($response['result']) {
+                $putfields = [
+                    'api_token' => $userToken,
+                    'domain' => "{$sld}.{$tld}",
+                    '_method' => 'PUT',
+                    'contact_id' => $registrantId,
+                    'auth_code' => $authCode,
+                    'clientDeleteProhibited' => true,
+                    'clientTransferProhibited' => true,
+                ];
+                if ($adminId) $putfields['admincontact'] = $adminId;
+
+                $api->setUrl($domainUpdateUrl);
+                $api->call('Update Domain', $putfields);
+
                 $result['success'] = true;
             } else {
                 $result['error'] = "{$sld}.{$tld} 註冊失敗";
@@ -208,9 +214,9 @@ function createContact($userToken, $testMode, $info = [])
 
         return $response['result'] ? $response['message']['contactId'] : null;
     } catch (\Exception $e) {
-        return array(
+        return [
             'error' => $e->getMessage(),
-        );
+        ];
     }
 }
 
@@ -397,55 +403,36 @@ function twnicepp_TransferDomain($params)
 function twnicepp_RenewDomain($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // registration parameters
     $sld = $params['sld'];
     $tld = $params['tld'];
     $registrationPeriod = $params['regperiod'];
 
-    // domain addon purchase status
-    $enableDnsManagement = (bool) $params['dnsmanagement'];
-    $enableEmailForwarding = (bool) $params['emailforwarding'];
-    $enableIdProtection = (bool) $params['idprotection'];
-
-    /**
-     * Premium domain parameters.
-     *
-     * Premium domains enabled informs you if the admin user has enabled
-     * the selling of premium domain names. If this domain is a premium name,
-     * `premiumCost` will contain the cost price retrieved at the time of
-     * the order being placed. A premium renewal should only be processed
-     * if the cost price now matches that previously fetched amount.
-     */
-    $premiumDomainsEnabled = (bool) $params['premiumEnabled'];
-    $premiumDomainsCost = $params['premiumCost'];
-
     // Build post data.
     $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
-        'years' => $registrationPeriod,
-        'dnsmanagement' => $enableDnsManagement,
-        'emailforwarding' => $enableEmailForwarding,
-        'idprotection' => $enableIdProtection,
+        'api_token' => $userToken,
+        'domain' => "{$sld}.{$tld}",
+        'period' => $registrationPeriod,
     );
 
+    $domainRenewUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains/renew' : 'http://dcitn.com/api/domains/renew';
+    
     try {
         $api = new ApiClient();
-        $api->call('Renew', $postfields);
+        $api->setUrl($domainRenewUrl);
+        $response = $api->call('Domain Renew', $postfields);
 
-        return array(
-            'success' => true,
-        );
+        $result = [];
+        if ($response['result']) {
+            $result['success'] = true;
+        } else {
+            $result['error'] = "{$sld}.{$tld} 續用失敗";
+        }
 
+        return $result;
     } catch (\Exception $e) {
         return array(
             'error' => $e->getMessage(),
@@ -467,43 +454,37 @@ function twnicepp_RenewDomain($params)
 function twnicepp_GetNameservers($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
     $tld = $params['tld'];
-    $registrationPeriod = $params['regperiod'];
 
     // Build post data
-    $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
-    );
+    $postfields = '?api_token='.$userToken.'&domain='.$sld.'.'.$tld;
 
+    $domainInfoUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains/show'.$postfields : 'http://dcitn.com/api/domains/show'.$postfields;
     try {
         $api = new ApiClient();
-        $api->call('GetNameservers', $postfields);
+        $api->setUrl($domainInfoUrl);
+        $response = $api->call('Domain GetNameservers', [], 'GET');
 
-        return array(
-            'success' => true,
-            'ns1' => $api->getFromResponse('nameserver1'),
-            'ns2' => $api->getFromResponse('nameserver2'),
-            'ns3' => $api->getFromResponse('nameserver3'),
-            'ns4' => $api->getFromResponse('nameserver4'),
-            'ns5' => $api->getFromResponse('nameserver5'),
-        );
+        $result = [];
+        if ($response['result']) {
+            foreach ($response['message']['nameservers'] as $nameserver) {
+                $result[] = $nameserver;
+            }
+        } else {
+            $result['error'] = "{$sld}.{$tld} 查詢 Nameserver 失敗";
+        }
+
+        return $result;
 
     } catch (\Exception $e) {
-        return array(
+        return [
             'error' => $e->getMessage(),
-        );
+        ];
     }
 }
 
