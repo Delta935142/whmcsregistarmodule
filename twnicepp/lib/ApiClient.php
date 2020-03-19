@@ -25,13 +25,17 @@ class ApiClient
      *
      * @return array
      */
-    public function call($action, $postfields)
+    public function call($action, $postfields, $method = 'POST')
     {
         $ch = curl_init();
         //curl_setopt($ch, CURLOPT_URL, self::API_URL . $action);
         curl_setopt($ch, CURLOPT_URL, $this->apiUrl);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+        
+        if ($method == 'POST') {
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+        }
+    
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         /*curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);*/
