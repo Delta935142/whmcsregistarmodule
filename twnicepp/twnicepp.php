@@ -151,7 +151,7 @@ function twnicepp_RegisterDomain($params)
         'nameservers' => $nameservers,
         'auth_code' => $authCode,
         'lang' => (strpos($params['tld'], '台灣')) ? 'ZH' : 'EN',
-        'contact_id' => $registrantId,
+        'registrant' => $registrantId,
     ];
 
     if ($adminId) $postfields['admincontact'] = $adminId;
@@ -170,7 +170,7 @@ function twnicepp_RegisterDomain($params)
                     'api_token' => $userToken,
                     'domain' => "{$sld}.{$tld}",
                     '_method' => 'PUT',
-                    'contact_id' => $registrantId,
+                    'registrant' => $registrantId,
                     'auth_code' => $authCode,
                     'clientDeleteProhibited' => true,
                     'clientTransferProhibited' => true,
@@ -461,31 +461,18 @@ function twnicepp_GetNameservers($params)
     $sld = $params['sld'];
     $tld = $params['tld'];
 
-    // Build post data
-    $postfields = '?api_token='.$userToken.'&domain='.$sld.'.'.$tld;
+    $response = getDomainInfo($userToken, $testMode, $sld.'.'.$tld) ?? [];
 
-    $domainInfoUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains/show'.$postfields : 'http://dcitn.com/api/domains/show'.$postfields;
-    try {
-        $api = new ApiClient();
-        $api->setUrl($domainInfoUrl);
-        $response = $api->call('Domain GetNameservers', [], 'GET');
-
-        $result = [];
-        if ($response['result']) {
-            foreach ($response['message']['nameservers'] as $nameserver) {
-                $result[] = $nameserver;
-            }
-        } else {
-            $result['error'] = "{$sld}.{$tld} 查詢 Nameserver 失敗";
+    $result = [];
+    if (!array_key_exists('error', $response)) {
+        foreach ($response['nameservers'] as $nameserver) {
+            $result[] = $nameserver;
         }
-
-        return $result;
-
-    } catch (\Exception $e) {
-        return [
-            'error' => $e->getMessage(),
-        ];
+    } else {
+        $result['error'] = "{$sld}.{$tld} 查詢 Nameserver 失敗";
     }
+
+    return $result;
 }
 
 /**
@@ -503,49 +490,72 @@ function twnicepp_GetNameservers($params)
 function twnicepp_SaveNameservers($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
     $tld = $params['tld'];
 
     // submitted nameserver values
-    $nameserver1 = $params['ns1'];
-    $nameserver2 = $params['ns2'];
-    $nameserver3 = $params['ns3'];
-    $nameserver4 = $params['ns4'];
-    $nameserver5 = $params['ns5'];
+    $nameservers = [];
+    if ($params['ns1']) array_push($nameservers, $params['ns1']);
+    if ($params['ns2']) array_push($nameservers, $params['ns2']);
+    if ($params['ns3']) array_push($nameservers, $params['ns3']);
+    if ($params['ns4']) array_push($nameservers, $params['ns4']);
+    if ($params['ns5']) array_push($nameservers, $params['ns5']);
 
-    // Build post data
-    $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
-        'nameserver1' => $nameserver1,
-        'nameserver2' => $nameserver2,
-        'nameserver3' => $nameserver3,
-        'nameserver4' => $nameserver4,
-        'nameserver5' => $nameserver5,
-    );
+    $response = getDomainInfo($userToken, $testMode, $sld.'.'.$tld) ?? [];
+
+    if (!array_key_exists('error', $response)) {
+        // Build post data
+        $putfields = [
+            'api_token' => $userToken,
+            'domain' => "{$sld}.{$tld}",
+            '_method' => 'PUT',
+            'nameservers' => $nameservers,
+            'registrant' => $response['registrant'],
+            'auth_code' => $response['authCode']
+        ];
+
+        $domainUpdateUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
+        try {
+            $api = new ApiClient();
+            $api->setUrl($domainUpdateUrl);
+            $response = $api->call('Domain SetNameservers', $putfields);
+
+            return $response['result'] ? 'Nameserver 更新完成' : 'Nameserver 更新失敗';
+        } catch (\Exception $e) {
+            return array(
+                'error' => $e->getMessage(),
+            );
+        }
+    }
+}
+
+/**
+ * Domain Info
+ *
+ * @param [type] $userToken
+ * @param [type] $testMode
+ * @param [type] $domain
+ * @return void
+ */
+function getDomainInfo($userToken, $testMode, $domain)
+{
+    $getfields = '?api_token='.$userToken.'&domain='.$domain;
+    $domainInfoUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains/show'.$getfields : 'http://dcitn.com/api/domains/show'.$getfields;
 
     try {
         $api = new ApiClient();
-        $api->call('SetNameservers', $postfields);
+        $api->setUrl($domainInfoUrl);
+        $response = $api->call('Domain Info', [], 'GET');
 
-        return array(
-            'success' => true,
-        );
-
+        return $response['result'] ? $response['message'] : null;
     } catch (\Exception $e) {
-        return array(
+        return [
             'error' => $e->getMessage(),
-        );
+        ];
     }
 }
 
@@ -564,92 +574,128 @@ function twnicepp_SaveNameservers($params)
 function twnicepp_GetContactDetails($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
     $tld = $params['tld'];
 
     // Build post data
-    $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
-    );
+    $response = getDomainInfo($userToken, $testMode, $sld.'.'.$tld) ?? [];
+
+    if (!array_key_exists('error', $response)) {
+        $registrant = getContactInfo($userToken, $testMode, $response['registrant']);
+        $registrantArr = [
+            'Name' => $registrant['post_info'][0]['name'],
+            'Company Name' => $registrant['post_info'][0]['organization'],
+            'Email Address' => $registrant['email'],
+            'Address 1' => $registrant['post_info'][0]['address'][0],
+            'Address 2' => $registrant['post_info'][0]['address'][1],
+            'City' => $registrant['post_info'][0]['city'],
+            'State' => $registrant['post_info'][0]['province'],
+            'Postcode' => $registrant['post_info'][0]['zipcode'],
+            'Country' => $registrant['post_info'][0]['country'],
+            'Phone Number' => $registrant['phone'],
+            'Fax Number' => $registrant['fax'],
+            'Auth Code' => $registrant['auth_code'],
+        ];
+
+        $adminArr = [];
+        $techArr = [];
+        $billingArr = [];
+        $admin = null;
+        $tech = null;
+        $billing = null;
+        foreach ($response['contacts'] as $contact) {
+            if (strstr($contact, 'admin')) $admin = getContactInfo($userToken, $testMode, explode(':', $contact)[1]);
+            if (strstr($contact, 'tech')) $tech = getContactInfo($userToken, $testMode, explode(':', $contact)[1]);
+            if (strstr($contact, 'billing')) $billing = getContactInfo($userToken, $testMode, explode(':', $contact)[1]);
+        }
+
+        if (is_array($admin)) {
+            $adminArr = [
+                'Name' => $admin['post_info'][0]['name'],
+                'Company Name' => $admin['post_info'][0]['organization'],
+                'Email Address' => $admin['email'],
+                'Address 1' => $admin['post_info'][0]['address'][0],
+                'Address 2' => $admin['post_info'][0]['address'][1],
+                'City' => $admin['post_info'][0]['city'],
+                'State' => $admin['post_info'][0]['province'],
+                'Postcode' => $admin['post_info'][0]['zipcode'],
+                'Country' => $admin['post_info'][0]['country'],
+                'Phone Number' => $admin['phone'],
+                'Fax Number' => $admin['fax'],
+                'Auth Code' => $admin['auth_code'],
+            ];
+        }
+
+        if (is_array($tech)) {
+            $techArr = [
+                'Name' => $tech['post_info'][0]['name'],
+                'Company Name' => $tech['post_info'][0]['organization'],
+                'Email Address' => $tech['email'],
+                'Address 1' => $tech['post_info'][0]['address'][0],
+                'Address 2' => $tech['post_info'][0]['address'][1],
+                'City' => $tech['post_info'][0]['city'],
+                'State' => $tech['post_info'][0]['province'],
+                'Postcode' => $tech['post_info'][0]['zipcode'],
+                'Country' => $tech['post_info'][0]['country'],
+                'Phone Number' => $tech['phone'],
+                'Fax Number' => $tech['fax'],
+                'Auth Code' => $tech['auth_code'],
+            ];
+        }
+
+        if (is_array($billing)) {
+            $billingArr = [
+                'Name' => $billing['post_info'][0]['name'],
+                'Company Name' => $billing['post_info'][0]['organization'],
+                'Email Address' => $billing['email'],
+                'Address 1' => $billing['post_info'][0]['address'][0],
+                'Address 2' => $billing['post_info'][0]['address'][1],
+                'City' => $billing['post_info'][0]['city'],
+                'State' => $billing['post_info'][0]['province'],
+                'Postcode' => $billing['post_info'][0]['zipcode'],
+                'Country' => $billing['post_info'][0]['country'],
+                'Phone Number' => $billing['phone'],
+                'Fax Number' => $billing['fax'],
+                'Auth Code' => $billing['auth_code'],
+            ];
+        }
+
+        return [
+            'Registrant' => $registrantArr,
+            'Technical' => $techArr,
+            'Billing' => $billingArr,
+            'Admin' => $adminArr,
+        ];
+    }
+}
+
+/**
+ * Contact Info
+ *
+ * @param [type] $userToken
+ * @param [type] $testMode
+ * @param [type] $contactId
+ * @return void
+ */
+function getContactInfo($userToken, $testMode, $contactId)
+{
+    $getfields = '?api_token='.$userToken.'&contact_id='.$contactId;
+    $contactInfoUrl = ($testMode) ? 'http://dev.dcitn.com/api/contacts/show'.$getfields : 'http://dcitn.com/api/contacts/show'.$getfields;
 
     try {
         $api = new ApiClient();
-        $api->call('GetWhoisInformation', $postfields);
+        $api->setUrl($contactInfoUrl);
+        $response = $api->call('Contact Info', [], 'GET');
 
-        return array(
-            'Registrant' => array(
-                'First Name' => $api->getFromResponse('registrant.firstname'),
-                'Last Name' => $api->getFromResponse('registrant.lastname'),
-                'Company Name' => $api->getFromResponse('registrant.company'),
-                'Email Address' => $api->getFromResponse('registrant.email'),
-                'Address 1' => $api->getFromResponse('registrant.address1'),
-                'Address 2' => $api->getFromResponse('registrant.address2'),
-                'City' => $api->getFromResponse('registrant.city'),
-                'State' => $api->getFromResponse('registrant.state'),
-                'Postcode' => $api->getFromResponse('registrant.postcode'),
-                'Country' => $api->getFromResponse('registrant.country'),
-                'Phone Number' => $api->getFromResponse('registrant.phone'),
-                'Fax Number' => $api->getFromResponse('registrant.fax'),
-            ),
-            'Technical' => array(
-                'First Name' => $api->getFromResponse('tech.firstname'),
-                'Last Name' => $api->getFromResponse('tech.lastname'),
-                'Company Name' => $api->getFromResponse('tech.company'),
-                'Email Address' => $api->getFromResponse('tech.email'),
-                'Address 1' => $api->getFromResponse('tech.address1'),
-                'Address 2' => $api->getFromResponse('tech.address2'),
-                'City' => $api->getFromResponse('tech.city'),
-                'State' => $api->getFromResponse('tech.state'),
-                'Postcode' => $api->getFromResponse('tech.postcode'),
-                'Country' => $api->getFromResponse('tech.country'),
-                'Phone Number' => $api->getFromResponse('tech.phone'),
-                'Fax Number' => $api->getFromResponse('tech.fax'),
-            ),
-            'Billing' => array(
-                'First Name' => $api->getFromResponse('billing.firstname'),
-                'Last Name' => $api->getFromResponse('billing.lastname'),
-                'Company Name' => $api->getFromResponse('billing.company'),
-                'Email Address' => $api->getFromResponse('billing.email'),
-                'Address 1' => $api->getFromResponse('billing.address1'),
-                'Address 2' => $api->getFromResponse('billing.address2'),
-                'City' => $api->getFromResponse('billing.city'),
-                'State' => $api->getFromResponse('billing.state'),
-                'Postcode' => $api->getFromResponse('billing.postcode'),
-                'Country' => $api->getFromResponse('billing.country'),
-                'Phone Number' => $api->getFromResponse('billing.phone'),
-                'Fax Number' => $api->getFromResponse('billing.fax'),
-            ),
-            'Admin' => array(
-                'First Name' => $api->getFromResponse('admin.firstname'),
-                'Last Name' => $api->getFromResponse('admin.lastname'),
-                'Company Name' => $api->getFromResponse('admin.company'),
-                'Email Address' => $api->getFromResponse('admin.email'),
-                'Address 1' => $api->getFromResponse('admin.address1'),
-                'Address 2' => $api->getFromResponse('admin.address2'),
-                'City' => $api->getFromResponse('admin.city'),
-                'State' => $api->getFromResponse('admin.state'),
-                'Postcode' => $api->getFromResponse('admin.postcode'),
-                'Country' => $api->getFromResponse('admin.country'),
-                'Phone Number' => $api->getFromResponse('admin.phone'),
-                'Fax Number' => $api->getFromResponse('admin.fax'),
-            ),
-        );
-
+        return $response['result'] ? $response['message'] : null;
     } catch (\Exception $e) {
-        return array(
+        return [
             'error' => $e->getMessage(),
-        );
+        ];
     }
 }
 
@@ -1206,46 +1252,25 @@ function twnicepp_IDProtectToggle($params)
 function twnicepp_GetEPPCode($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
     $tld = $params['tld'];
 
-    // Build post data
-    $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
-    );
+    $response = getDomainInfo($userToken, $testMode, $sld.'.'.$tld) ?? [];
 
-    try {
-        $api = new ApiClient();
-        $api->call('RequestEPPCode', $postfields);
-
-        if ($api->getFromResponse('eppcode')) {
-            // If EPP Code is returned, return it for display to the end user
-            return array(
-                'eppcode' => $api->getFromResponse('eppcode'),
-            );
-        } else {
-            // If EPP Code is not returned, it was sent by email, return success
-            return array(
-                'success' => 'success',
-            );
-        }
-
-    } catch (\Exception $e) {
-        return array(
-            'error' => $e->getMessage(),
-        );
+    $result = [];
+    if (!array_key_exists('error', $response)) {
+        $result = [
+            'eppcode' => $response['authCode'],
+        ];
+    } else {
+        $result['error'] = "{$sld}.{$tld} 發送 EppCode 失敗";
     }
+
+    return $result;
 }
 
 /**
