@@ -1350,12 +1350,8 @@ function twnicepp_ReleaseDomain($params)
 function twnicepp_RequestDelete($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
@@ -1363,19 +1359,18 @@ function twnicepp_RequestDelete($params)
 
     // Build post data
     $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
+        'api_token' => $userToken,
         'domain' => $sld . '.' . $tld,
+        '_method' => 'DELETE',
     );
 
+    $domainDeleteUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
     try {
         $api = new ApiClient();
-        $api->call('DeleteDomain', $postfields);
+        $api->setUrl($domainDeleteUrl);
+        $response = $api->call('Delete Domain', $postfields);
 
-        return array(
-            'success' => 'success',
-        );
+        return $response['result'] ? ['success' => true] : ['error' => '網域刪除失敗'];
 
     } catch (\Exception $e) {
         return array(
@@ -1763,6 +1758,12 @@ function twnicepp_ClientArea($params)
     return $output;
 }
 
+/**
+ * Debug
+ *
+ * @param [type] $params
+ * @return void
+ */
 function twnicepp_dd($params)
 {
     echo "<pre>";
