@@ -112,7 +112,7 @@ function twnicepp_RegisterDomain($params)
     if ($params['ns5']) array_push($nameservers, $params['ns5']);
 
     // registrant information
-    $registrantId = createContact($userToken, $testMode, [
+    $registarArr = [
         'name' => $params["firstname"].$params["lastname"],
         'email' => $params["email"],
         'phone' => '+'.$params["phonecc"].'.'.$params["phonenumber"],
@@ -125,7 +125,19 @@ function twnicepp_RegisterDomain($params)
         'province' => $params["state"],
         'fax' => $params["fax"],
         'auth_code' => $authCode,
-    ]);
+    ];
+
+    if (isset($params["customfields"]) && count($params["customfields"]) > 0) {
+        $registarArr['c_name'] = $params["customfields"][0]['value'];
+        $registarArr['app_id'] = $params["customfields"][1]['value'];
+        $registarArr['c_organization'] = $params["customfields"][2]['value'];
+        $registarArr['cmp_id'] = $params["customfields"][3]['value'];
+        $registarArr['c_province'] = $params["customfields"][4]['value'];
+        $registarArr['c_city'] = $params["customfields"][5]['value'];
+        $registarArr['c_address'] = $params["customfields"][6]['value'];
+    }
+
+    $registrantId = createContact($userToken, $testMode, $registarArr);
 
     // Admin contact information
     $adminId = createContact($userToken, $testMode, [
@@ -1386,12 +1398,8 @@ function twnicepp_RequestDelete($params)
 function twnicepp_RegisterNameserver($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
@@ -1401,23 +1409,34 @@ function twnicepp_RegisterNameserver($params)
     $nameserver = $params['nameserver'];
     $ipAddress = $params['ipaddress'];
 
+    $hostUrl = ($testMode) ? 'http://dev.dcitn.com/api/hosts?nameservers='.$nameserver.'&api_token='.$userToken : 'http://dcitn.com/api/hosts?nameserver='.$nameserver.'&api_token='.$userToken;
+    
+    $api = new ApiClient();
+    try {
+        $api->setUrl($hostUrl);
+        $response = $api->call('Check Nameserver', [], 'GET');
+
+        if ($response['result'] && $response['message']['message'][0]['exist']) return ['error' => 'Nameserver 已經存在'];
+
+    } catch (\Exception $e) {
+        return array(
+            'error' => $e->getMessage(),
+        );
+    }
+
     // Build post data
     $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
+        'api_token' => $userToken,
         'nameserver' => $nameserver,
-        'ip' => $ipAddress,
+        'ip_address' => $ipAddress,
     );
 
+    $HostCreateUrl = ($testMode) ? 'http://dev.dcitn.com/api/hosts' : 'http://dcitn.com/api/hosts';
     try {
-        $api = new ApiClient();
-        $api->call('RegisterNameserver', $postfields);
+        $api->setUrl($HostCreateUrl);
+        $response = $api->call('RegisterNameserver', $postfields);
 
-        return array(
-            'success' => 'success',
-        );
+        return $response['result'] ? ['success' => true] : ['error' => 'Nameserver 註冊失敗'];
 
     } catch (\Exception $e) {
         return array(
@@ -1440,12 +1459,8 @@ function twnicepp_RegisterNameserver($params)
 function twnicepp_ModifyNameserver($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
@@ -1456,24 +1471,37 @@ function twnicepp_ModifyNameserver($params)
     $currentIpAddress = $params['currentipaddress'];
     $newIpAddress = $params['newipaddress'];
 
+    $hostInfoUrl = ($testMode) ? 'http://dev.dcitn.com/api/hosts/show?nameserver='.$nameserver.'&api_token='.$userToken : 'http://dcitn.com/api/hosts/show?nameserver='.$nameserver.'&api_token='.$userToken;
+    $api = new ApiClient();
+    try {
+        $api->setUrl($hostInfoUrl);
+        $response = $api->call('Get Nameserver', [], 'GET');
+
+        $oldIp = $response['result'] ? array_keys($response['message']['ip'])[0] : null;
+
+    } catch (\Exception $e) {
+        return array(
+            'error' => $e->getMessage(),
+        );
+    }
+
+    if ($currentIpAddress != $oldIp) return ['error' => 'Nameserver 更新失敗'];
+
     // Build post data
     $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
+        'api_token' => $userToken,
         'nameserver' => $nameserver,
         'currentip' => $currentIpAddress,
-        'newip' => $newIpAddress,
+        'ip_address' => $newIpAddress,
+        '_method' => 'PUT',
     );
 
+    $hostUpdateUrl = ($testMode) ? 'http://dev.dcitn.com/api/hosts' : 'http://dcitn.com/api/hosts';
     try {
-        $api = new ApiClient();
-        $api->call('ModifyNameserver', $postfields);
+        $api->setUrl($hostUpdateUrl);
+        $response = $api->call('ModifyNameserver', $postfields);
 
-        return array(
-            'success' => 'success',
-        );
+        return $response['result'] ? ['success' => true] : ['error' => 'Nameserver 更新失敗'];
 
     } catch (\Exception $e) {
         return array(
@@ -1494,12 +1522,8 @@ function twnicepp_ModifyNameserver($params)
 function twnicepp_DeleteNameserver($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
@@ -1508,22 +1532,34 @@ function twnicepp_DeleteNameserver($params)
     // nameserver parameters
     $nameserver = $params['nameserver'];
 
+    $hostUrl = ($testMode) ? 'http://dev.dcitn.com/api/hosts?nameservers='.$nameserver.'&api_token='.$userToken : 'http://dcitn.com/api/hosts?nameserver='.$nameserver.'&api_token='.$userToken;
+    
+    $api = new ApiClient();
+    try {
+        $api->setUrl($hostUrl);
+        $response = $api->call('Check Nameserver', [], 'GET');
+
+        if ($response['result'] && !$response['message']['message'][0]['exist']) return ['error' => 'Nameserver 不存在'];
+
+    } catch (\Exception $e) {
+        return array(
+            'error' => $e->getMessage(),
+        );
+    }
+
     // Build post data
     $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
+        'api_token' => $userToken,
         'nameserver' => $nameserver,
+        '_method' => 'DELETE',
     );
 
+    $hostDeleteUrl = ($testMode) ? 'http://dev.dcitn.com/api/hosts' : 'http://dcitn.com/api/hosts';
     try {
-        $api = new ApiClient();
+        $api->setUrl($hostDeleteUrl);
         $api->call('DeleteNameserver', $postfields);
 
-        return array(
-            'success' => 'success',
-        );
+        return $response['result'] ? ['success' => true] : ['error' => 'Nameserver 刪除失敗'];
 
     } catch (\Exception $e) {
         return array(
@@ -1725,4 +1761,11 @@ function twnicepp_ClientArea($params)
     ';
 
     return $output;
+}
+
+function twnicepp_dd($params)
+{
+    echo "<pre>";
+    print_r($params);
+    exit();
 }
