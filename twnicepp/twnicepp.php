@@ -182,10 +182,8 @@ function twnicepp_RegisterDomain($params)
                     'api_token' => $userToken,
                     'domain' => "{$sld}.{$tld}",
                     '_method' => 'PUT',
-                    'registrant' => $registrantId,
-                    'auth_code' => $authCode,
-                    'clientDeleteProhibited' => true,
-                    'clientTransferProhibited' => true,
+                    'clientDeleteProhibited' => 'true',
+                    'clientTransferProhibited' => 'true',
                 ];
                 if ($adminId) $putfields['admincontact'] = $adminId;
 
@@ -251,12 +249,8 @@ function createContact($userToken, $testMode, $info = [])
 function twnicepp_TransferDomain($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // registration parameters
     $sld = $params['sld'];
@@ -264,135 +258,33 @@ function twnicepp_TransferDomain($params)
     $registrationPeriod = $params['regperiod'];
     $eppCode = $params['eppcode'];
 
-    /**
-     * Nameservers.
-     *
-     * If purchased with web hosting, values will be taken from the
-     * assigned web hosting server. Otherwise uses the values specified
-     * during the order process.
-     */
-    $nameserver1 = $params['ns1'];
-    $nameserver2 = $params['ns2'];
-    $nameserver3 = $params['ns3'];
-    $nameserver4 = $params['ns4'];
-    $nameserver5 = $params['ns5'];
+    $nameservers = [];
+    if ($params['ns1']) array_push($nameservers, $params['ns1']);
+    if ($params['ns2']) array_push($nameservers, $params['ns2']);
+    if ($params['ns3']) array_push($nameservers, $params['ns3']);
+    if ($params['ns4']) array_push($nameservers, $params['ns4']);
+    if ($params['ns5']) array_push($nameservers, $params['ns5']);
 
-    // registrant information
-    $firstName = $params["firstname"];
-    $lastName = $params["lastname"];
-    $fullName = $params["fullname"]; // First name and last name combined
-    $companyName = $params["companyname"];
-    $email = $params["email"];
-    $address1 = $params["address1"];
-    $address2 = $params["address2"];
-    $city = $params["city"];
-    $state = $params["state"]; // eg. TX
-    $stateFullName = $params["fullstate"]; // eg. Texas
-    $postcode = $params["postcode"]; // Postcode/Zip code
-    $countryCode = $params["countrycode"]; // eg. GB
-    $countryName = $params["countryname"]; // eg. United Kingdom
-    $phoneNumber = $params["phonenumber"]; // Phone number as the user provided it
-    $phoneCountryCode = $params["phonecc"]; // Country code determined based on country
-    $phoneNumberFormatted = $params["fullphonenumber"]; // Format: +CC.xxxxxxxxxxxx
+    $postfields = [
+        'api_token' => $userToken,
+        'domain' => "{$sld}.{$tld}",
+        'period' => $registrationPeriod,
+        'auth_code' => $eppCode,
+        'nameservers' => $nameservers,
+    ];
 
-    /**
-     * Admin contact information.
-     *
-     * Defaults to the same as the client information. Can be configured
-     * to use the web hosts details if the `Use Clients Details` option
-     * is disabled in Setup > General Settings > Domains.
-     */
-    $adminFirstName = $params["adminfirstname"];
-    $adminLastName = $params["adminlastname"];
-    $adminCompanyName = $params["admincompanyname"];
-    $adminEmail = $params["adminemail"];
-    $adminAddress1 = $params["adminaddress1"];
-    $adminAddress2 = $params["adminaddress2"];
-    $adminCity = $params["admincity"];
-    $adminState = $params["adminstate"]; // eg. TX
-    $adminStateFull = $params["adminfullstate"]; // eg. Texas
-    $adminPostcode = $params["adminpostcode"]; // Postcode/Zip code
-    $adminCountry = $params["admincountry"]; // eg. GB
-    $adminPhoneNumber = $params["adminphonenumber"]; // Phone number as the user provided it
-    $adminPhoneNumberFormatted = $params["adminfullphonenumber"]; // Format: +CC.xxxxxxxxxxxx
-
-    // domain addon purchase status
-    $enableDnsManagement = (bool) $params['dnsmanagement'];
-    $enableEmailForwarding = (bool) $params['emailforwarding'];
-    $enableIdProtection = (bool) $params['idprotection'];
-
-    /**
-     * Premium domain parameters.
-     *
-     * Premium domains enabled informs you if the admin user has enabled
-     * the selling of premium domain names. If this domain is a premium name,
-     * `premiumCost` will contain the cost price retrieved at the time of
-     * the order being placed. The premium order should only be processed
-     * if the cost price now matches that previously fetched amount.
-     */
-    $premiumDomainsEnabled = (bool) $params['premiumEnabled'];
-    $premiumDomainsCost = $params['premiumCost'];
-
-    // Build post data
-    $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
-        'eppcode' => $eppCode,
-        'nameservers' => array(
-            'ns1' => $nameserver1,
-            'ns2' => $nameserver2,
-            'ns3' => $nameserver3,
-            'ns4' => $nameserver4,
-            'ns5' => $nameserver5,
-        ),
-        'years' => $registrationPeriod,
-        'contacts' => array(
-            'registrant' => array(
-                'firstname' => $firstName,
-                'lastname' => $lastName,
-                'companyname' => $companyName,
-                'email' => $email,
-                'address1' => $address1,
-                'address2' => $address2,
-                'city' => $city,
-                'state' => $state,
-                'zipcode' => $postcode,
-                'country' => $countryCode,
-                'phonenumber' => $phoneNumberFormatted,
-            ),
-            'tech' => array(
-                'firstname' => $adminFirstName,
-                'lastname' => $adminLastName,
-                'companyname' => $adminCompanyName,
-                'email' => $adminEmail,
-                'address1' => $adminAddress1,
-                'address2' => $adminAddress2,
-                'city' => $adminCity,
-                'state' => $adminState,
-                'zipcode' => $adminPostcode,
-                'country' => $adminCountry,
-                'phonenumber' => $adminPhoneNumberFormatted,
-            ),
-        ),
-        'dnsmanagement' => $enableDnsManagement,
-        'emailforwarding' => $enableEmailForwarding,
-        'idprotection' => $enableIdProtection,
-    );
+    $domainTransferRequestUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains/transfer-request' : 'http://dcitn.com/api/domains/transfer-request';
 
     try {
         $api = new ApiClient();
-        $api->call('Transfer', $postfields);
+        $api->setUrl($domainTransferRequestUrl);
+        $response = $api->call('Domain Transfer Request', $postfields);
 
-        return array(
-            'success' => true,
-        );
-
+        return $response['result'] ? "{$sld}.{$tld} 轉入請求已送出" : "{$sld}.{$tld} 轉入請求失敗";
     } catch (\Exception $e) {
-        return array(
+        return [
             'error' => $e->getMessage(),
-        );
+        ];
     }
 }
 
@@ -1005,40 +897,20 @@ function twnicepp_GetDomainSuggestions($params)
 function twnicepp_GetRegistrarLock($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
     $tld = $params['tld'];
 
-    // Build post data
-    $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
-    );
+    $response = getDomainInfo($userToken, $testMode, $sld.'.'.$tld) ?? [];
 
-    try {
-        $api = new ApiClient();
-        $api->call('GetLockStatus', $postfields);
-
-        if ($api->getFromResponse('lockstatus') == 'locked') {
-            return 'locked';
-        } else {
-            return 'unlocked';
-        }
-
-    } catch (\Exception $e) {
-        return array(
-            'error' => $e->getMessage(),
-        );
+    if (!array_key_exists('error', $response)) {
+        return (in_array('clientTransferProhibited', $response['status'])) ? 'locked' : 'unlocked';
     }
+    
+    return 'unlocked';
 }
 
 /**
@@ -1053,12 +925,8 @@ function twnicepp_GetRegistrarLock($params)
 function twnicepp_SaveRegistrarLock($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
@@ -1068,21 +936,20 @@ function twnicepp_SaveRegistrarLock($params)
     $lockStatus = $params['lockenabled'];
 
     // Build post data
-    $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
-        'registrarlock' => ($lockStatus == 'locked') ? 1 : 0,
+    $putfields = array(
+        'api_token' => $userToken,
+        'domain' => "{$sld}.{$tld}",
+        '_method' => 'PUT',
+        'client_transfer_prohibited' => ($lockStatus == 'locked') ? 'true' : 'false',
     );
 
+    $domainUpdateUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
     try {
         $api = new ApiClient();
-        $api->call('SetLockStatus', $postfields);
+        $api->setUrl($domainUpdateUrl);
+        $response = $api->call('Domain TransferLock', $putfields);
 
-        return array(
-            'success' => 'success',
-        );
+        return $response['result'] ? "{$sld}.{$tld} 更新完成" : "{$sld}.{$tld} 更新失敗";
 
     } catch (\Exception $e) {
         return array(
@@ -1579,41 +1446,28 @@ function twnicepp_DeleteNameserver($params)
 function twnicepp_Sync($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
     $tld = $params['tld'];
 
-    // Build post data
-    $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
-    );
+    $response = getDomainInfo($userToken, $testMode, $sld.'.'.$tld) ?? [];
 
-    try {
-        $api = new ApiClient();
-        $api->call('GetDomainInfo', $postfields);
-
-        return array(
-            'expirydate' => $api->getFromResponse('expirydate'), // Format: YYYY-MM-DD
-            'active' => (bool) $api->getFromResponse('active'), // Return true if the domain is active
-            'expired' => (bool) $api->getFromResponse('expired'), // Return true if the domain has expired
-            'transferredAway' => (bool) $api->getFromResponse('transferredaway'), // Return true if the domain is transferred out
-        );
-
-    } catch (\Exception $e) {
-        return array(
-            'error' => $e->getMessage(),
-        );
+    if (!array_key_exists('error', $response)) {
+        $expdate = date('Y-m-d', strtotime($response['expiration']));
+        return [
+            'expirydate' => $expdate, // Format: YYYY-MM-DD
+            'active' => true, // Return true if the domain is active
+            'expired' => date('Y-m-d') >= $expdate ? true : false, // Return true if the domain has expired
+            'transferredAway' => false, // Return true if the domain is transferred out
+        ];
     }
+
+    return [
+        'error' => $response['message']
+    ];
 }
 
 /**
@@ -1687,9 +1541,10 @@ function twnicepp_TransferSync($params)
  */
 function twnicepp_ClientAreaCustomButtonArray()
 {
-    return array(
+    /*return array(
         'Push Domain' => 'push',
-    );
+    );*/
+    return [];
 }
 
 /**
@@ -1702,9 +1557,10 @@ function twnicepp_ClientAreaCustomButtonArray()
  */
 function twnicepp_ClientAreaAllowedFunctions()
 {
-    return array(
+    /*return array(
         'Push Domain' => 'push',
-    );
+    );*/
+    return [];
 }
 
 /**
@@ -1716,7 +1572,7 @@ function twnicepp_ClientAreaAllowedFunctions()
  *
  * @return array
  */
-function twnicepp_push($params)
+/*function twnicepp_push($params)
 {
     // user defined configuration values
     $userIdentifier = $params['API Username'];
@@ -1733,7 +1589,7 @@ function twnicepp_push($params)
     // Perform custom action here...
 
     return 'Not implemented';
-}
+}*/
 
 /**
  * Client Area Output.
