@@ -502,8 +502,18 @@ function twnicepp_GetContactDetails($params)
             'Country' => $registrant['post_info'][0]['country'],
             'Phone Number' => $registrant['phone'],
             'Fax Number' => $registrant['fax'],
-            'Auth Code' => $registrant['auth_code'],
         ];
+
+        if (array_key_exists(1, $registrant['post_info'])) {
+            $registrantArr['Chinese Name'] = $registrant['post_info'][1]['name'];
+            $registrantArr['TaiwanID'] = $registrant['app_id'];
+            $registrantArr['Chinese Company Name'] = $registrant['post_info'][1]['organization'];
+            $registrantArr['CompanyID'] = $registrant['cmp_id'];
+            $registrantArr['Chinese State'] = $registrant['post_info'][1]['province'];
+            $registrantArr['Chinese City'] = $registrant['post_info'][1]['city'];
+            $registrantArr['Chinese Address'] = $registrant['post_info'][1]['address'][0];
+        }
+        $registrantArr['Auth Code'] = $registrant['auth_code'];
 
         $adminArr = [];
         $techArr = [];
@@ -530,8 +540,18 @@ function twnicepp_GetContactDetails($params)
                 'Country' => $admin['post_info'][0]['country'],
                 'Phone Number' => $admin['phone'],
                 'Fax Number' => $admin['fax'],
-                'Auth Code' => $admin['auth_code'],
             ];
+
+            if (array_key_exists(1, $admin['post_info'])) {
+                $adminArr['Chinese Name'] = $admin['post_info'][1]['name'];
+                $adminArr['TaiwanID'] = $admin['app_id'];
+                $adminArr['Chinese Company Name'] = $admin['post_info'][1]['organization'];
+                $adminArr['CompanyID'] = $admin['cmp_id'];
+                $adminArr['Chinese State'] = $admin['post_info'][1]['province'];
+                $adminArr['Chinese City'] = $admin['post_info'][1]['city'];
+                $adminArr['Chinese Address'] = $admin['post_info'][1]['address'][0];
+            }
+            $adminArr['Auth Code'] = $admin['auth_code'];
         }
 
         if (is_array($tech)) {
@@ -547,8 +567,18 @@ function twnicepp_GetContactDetails($params)
                 'Country' => $tech['post_info'][0]['country'],
                 'Phone Number' => $tech['phone'],
                 'Fax Number' => $tech['fax'],
-                'Auth Code' => $tech['auth_code'],
             ];
+
+            if (array_key_exists(1, $tech['post_info'])) {
+                $techArr['Chinese Name'] = $tech['post_info'][1]['name'];
+                $techArr['TaiwanID'] = $tech['app_id'];
+                $techArr['Chinese Company Name'] = $tech['post_info'][1]['organization'];
+                $techArr['CompanyID'] = $tech['cmp_id'];
+                $techArr['Chinese State'] = $tech['post_info'][1]['province'];
+                $techArr['Chinese City'] = $tech['post_info'][1]['city'];
+                $techArr['Chinese Address'] = $tech['post_info'][1]['address'][0];
+            }
+            $techArr['Auth Code'] = $tech['auth_code'];
         }
 
         if (is_array($billing)) {
@@ -564,8 +594,18 @@ function twnicepp_GetContactDetails($params)
                 'Country' => $billing['post_info'][0]['country'],
                 'Phone Number' => $billing['phone'],
                 'Fax Number' => $billing['fax'],
-                'Auth Code' => $billing['auth_code'],
             ];
+
+            if (array_key_exists(1, $billing['post_info'])) {
+                $billingArr['Chinese Name'] = $billing['post_info'][1]['name'];
+                $billingArr['TaiwanID'] = $billing['app_id'];
+                $billingArr['Chinese Company Name'] = $billing['post_info'][1]['organization'];
+                $billingArr['CompanyID'] = $billing['cmp_id'];
+                $billingArr['Chinese State'] = $billing['post_info'][1]['province'];
+                $billingArr['Chinese City'] = $billing['post_info'][1]['city'];
+                $billingArr['Chinese Address'] = $billing['post_info'][1]['address'][0];
+            }
+            $billingArr['Auth Code'] = $billing['auth_code'];
         }
 
         return [
@@ -619,12 +659,8 @@ function getContactInfo($userToken, $testMode, $contactId)
 function twnicepp_SaveContactDetails($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
@@ -633,57 +669,85 @@ function twnicepp_SaveContactDetails($params)
     // whois information
     $contactDetails = $params['contactdetails'];
 
-    // Build post data
-    $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
-        'contacts' => array(
-            'registrant' => array(
-                'firstname' => $contactDetails['Registrant']['First Name'],
-                'lastname' => $contactDetails['Registrant']['Last Name'],
-                'company' => $contactDetails['Registrant']['Company Name'],
-                'email' => $contactDetails['Registrant']['Email Address'],
-                // etc...
-            ),
-            'tech' => array(
-                'firstname' => $contactDetails['Technical']['First Name'],
-                'lastname' => $contactDetails['Technical']['Last Name'],
-                'company' => $contactDetails['Technical']['Company Name'],
-                'email' => $contactDetails['Technical']['Email Address'],
-                // etc...
-            ),
-            'billing' => array(
-                'firstname' => $contactDetails['Billing']['First Name'],
-                'lastname' => $contactDetails['Billing']['Last Name'],
-                'company' => $contactDetails['Billing']['Company Name'],
-                'email' => $contactDetails['Billing']['Email Address'],
-                // etc...
-            ),
-            'admin' => array(
-                'firstname' => $contactDetails['Admin']['First Name'],
-                'lastname' => $contactDetails['Admin']['Last Name'],
-                'company' => $contactDetails['Admin']['Company Name'],
-                'email' => $contactDetails['Admin']['Email Address'],
-                // etc...
-            ),
-        ),
-    );
+    $response = getDomainInfo($userToken, $testMode, $sld.'.'.$tld) ?? [];
 
-    try {
-        $api = new ApiClient();
-        $api->call('UpdateWhoisInformation', $postfields);
-
-        return array(
-            'success' => true,
-        );
-
-    } catch (\Exception $e) {
-        return array(
-            'error' => $e->getMessage(),
-        );
+    $admin = null;
+    $tech = null;
+    $billing = null;
+    foreach ($response['contacts'] as $contact) {
+        if (strstr($contact, 'admin')) $admin = explode(':', $contact)[1];
+        if (strstr($contact, 'tech')) $tech = explode(':', $contact)[1];
+        if (strstr($contact, 'billing')) $billing = explode(':', $contact)[1];
     }
+
+    $types = [
+        'registrant' => 'Registrant', 
+        'admin' => 'Admin',
+        'tech' => 'Technical',
+        'billing' => 'Billing'
+    ];
+
+    $contacts = [
+        'registrant' => $response['registrant'],
+        'admin' => $admin,
+        'tech' => $tech,
+        'billing' => $billing,
+    ];
+
+    $contactUpdateUrl = ($testMode) ? 'http://dev.dcitn.com/api/contacts' : 'http://dcitn.com/api/contacts';
+
+    $api = new ApiClient();
+    $api->setUrl($contactUpdateUrl);
+
+    if (!array_key_exists('error', $response)) {
+        foreach ($types as $key => $val) {
+            if ($contacts[$key]) {
+                $info = [
+                    'api_token' => $userToken,
+                    '_method' => 'PUT',
+                    'contact_id' => $contacts[$key],
+                    'email' => $contactDetails[$val]['Email Address'],
+                    'phone' => $contactDetails[$val]['Phone Number'],
+                    'name' => $contactDetails[$val]['Name'],
+                    'organization' => $contactDetails[$val]['Company Name'],
+                    'address1' => $contactDetails[$val]['Address 1'],
+                    'address2' => $contactDetails[$val]['Address 2'],
+                    'zipcode' => $contactDetails[$val]['Postcode'],
+                    'city' => $contactDetails[$val]['City'], 
+                    'country' => $contactDetails[$val]['Country'], 
+                    'province' => $contactDetails[$val]['State'],
+                    'fax' => $contactDetails[$val]['Fax Number'],
+                    'auth_code' => $contactDetails[$val]['Auth Code'],
+                ];
+        
+                if (array_key_exists('Chinese Name', $contactDetails[$val])) {
+                    $info['c_name'] = $contactDetails[$val]['Chinese Name'];
+                    $info['c_organization'] = $contactDetails[$val]['Chinese Company Name'];
+                    $info['c_address'] = $contactDetails[$val]['Chinese Address'];
+                    $info['c_city'] = $contactDetails[$val]['Chinese City'];
+                    $info['c_province'] = $contactDetails[$val]['Chinese State'];
+                    $info['app_id'] = $contactDetails[$val]['TaiwanID'];
+                    $info['cmp_id'] = $contactDetails[$val]['CompanyID'];
+                }
+            }
+
+            try {
+                $response = $api->call('Update Whois Information', $info);
+            } catch (\Exception $e) {
+                return array(
+                    'error' => $e->getMessage(),
+                );
+            }
+        }
+
+        return [
+            'success' => true
+        ];
+    }
+
+    return [
+        'error' => '網域不存在'
+    ];
 }
 
 /**
@@ -1167,12 +1231,8 @@ function twnicepp_GetEPPCode($params)
 function twnicepp_ReleaseDomain($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
@@ -1183,20 +1243,17 @@ function twnicepp_ReleaseDomain($params)
 
     // Build post data
     $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
-        'newtag' => $transferTag,
+        'api_token' => $userToken,
+        'domain' => "{$sld}.{$tld}",
     );
 
+    $domainTransferApproveUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains/transfer-approve' : 'http://dcitn.com/api/domains/transfer-approve';
     try {
         $api = new ApiClient();
-        $api->call('ReleaseDomain', $postfields);
+        $api->setUrl($domainTransferApproveUrl);
+        $response = $api->call('Domain Transfer Approve', $postfields);
 
-        return array(
-            'success' => 'success',
-        );
+        return $response['result'] ? ['success' => 'success'] : ['error' => '網域轉移同意失敗'];
 
     } catch (\Exception $e) {
         return array(
