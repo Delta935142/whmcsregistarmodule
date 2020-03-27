@@ -127,20 +127,8 @@ function twnicepp_RegisterDomain($params)
         'auth_code' => $authCode,
     ];
 
-    if (isset($params["customfields"]) && count($params["customfields"]) > 0) {
-        $registarArr['c_name'] = $params["customfields"][0]['value'];
-        $registarArr['app_id'] = $params["customfields"][1]['value'];
-        $registarArr['c_organization'] = $params["customfields"][2]['value'];
-        $registarArr['cmp_id'] = $params["customfields"][3]['value'];
-        $registarArr['c_province'] = $params["customfields"][4]['value'];
-        $registarArr['c_city'] = $params["customfields"][5]['value'];
-        $registarArr['c_address'] = $params["customfields"][6]['value'];
-    }
-
-    $registrantId = createContact($userToken, $testMode, $registarArr);
-
     // Admin contact information
-    $adminId = createContact($userToken, $testMode, [
+    $adminArr = [
         'name' => $params["adminfirstname"].$params["adminlastname"],
         'email' => $params["adminemail"],
         'phone' => '+'.$params["adminphonecc"].'.'.$params["adminphonenumber"],
@@ -151,9 +139,32 @@ function twnicepp_RegisterDomain($params)
         'city' => $params["admincity"],
         'country' => $params["admincountry"],
         'province' => $params["adminstate"],
-        'fax' => $params["adminfax"],
+        'fax' => $params["fax"],
         'auth_code' => $authCode,
-    ]);
+    ];
+
+    if (isset($params["customfields"]) && count($params["customfields"]) > 0) {
+        $registarArr['c_name'] = $params["customfields"][0]['value'];
+        $registarArr['app_id'] = $params["customfields"][1]['value'];
+        $registarArr['c_organization'] = $params["customfields"][2]['value'];
+        $registarArr['cmp_id'] = $params["customfields"][3]['value'];
+        $registarArr['c_province'] = $params["customfields"][4]['value'];
+        $registarArr['c_city'] = $params["customfields"][5]['value'];
+        $registarArr['c_address'] = $params["customfields"][6]['value'];
+
+        $adminArr['c_name'] = $params["customfields"][0]['value'];
+        $adminArr['app_id'] = $params["customfields"][1]['value'];
+        $adminArr['c_organization'] = $params["customfields"][2]['value'];
+        $adminArr['cmp_id'] = $params["customfields"][3]['value'];
+        $adminArr['c_province'] = $params["customfields"][4]['value'];
+        $adminArr['c_city'] = $params["customfields"][5]['value'];
+        $adminArr['c_address'] = $params["customfields"][6]['value'];
+    }
+
+    $registrantId = createContact($userToken, $testMode, $registarArr);
+    $adminId = createContact($userToken, $testMode, $adminArr);
+    $techId = createContact($userToken, $testMode, $adminArr);
+    $billingId = createContact($userToken, $testMode, $adminArr);
 
     // Build post data
     $postfields = [
@@ -164,9 +175,10 @@ function twnicepp_RegisterDomain($params)
         'auth_code' => $authCode,
         'lang' => (strpos($params['tld'], '台灣')) ? 'ZH' : 'EN',
         'registrant' => $registrantId,
+        'admincontact' => $adminId,
+        'techcontact' => $techId,
+        'billingcontact' => $billingId,
     ];
-
-    if ($adminId) $postfields['admincontact'] = $adminId;
 
     if (!is_array($registrantId) && $registrantId) {
         $domainCreateUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
@@ -182,10 +194,9 @@ function twnicepp_RegisterDomain($params)
                     'api_token' => $userToken,
                     'domain' => "{$sld}.{$tld}",
                     '_method' => 'PUT',
-                    'clientDeleteProhibited' => 'true',
-                    'clientTransferProhibited' => 'true',
+                    'client_delete_prohibited' => 'true',
+                    'client_transfer_prohibited' => 'true',
                 ];
-                if ($adminId) $putfields['admincontact'] = $adminId;
 
                 $api->setUrl($domainUpdateUrl);
                 $api->call('Update Domain', $putfields);
@@ -418,8 +429,6 @@ function twnicepp_SaveNameservers($params)
             'domain' => "{$sld}.{$tld}",
             '_method' => 'PUT',
             'nameservers' => $nameservers,
-            'registrant' => $response['registrant'],
-            'auth_code' => $response['authCode']
         ];
 
         $domainUpdateUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
@@ -515,9 +524,6 @@ function twnicepp_GetContactDetails($params)
         }
         $registrantArr['Auth Code'] = $registrant['auth_code'];
 
-        $adminArr = [];
-        $techArr = [];
-        $billingArr = [];
         $admin = null;
         $tech = null;
         $billing = null;
@@ -527,92 +533,45 @@ function twnicepp_GetContactDetails($params)
             if (strstr($contact, 'billing')) $billing = getContactInfo($userToken, $testMode, explode(':', $contact)[1]);
         }
 
-        if (is_array($admin)) {
-            $adminArr = [
-                'Name' => $admin['post_info'][0]['name'],
-                'Company Name' => $admin['post_info'][0]['organization'],
-                'Email Address' => $admin['email'],
-                'Address 1' => $admin['post_info'][0]['address'][0],
-                'Address 2' => $admin['post_info'][0]['address'][1],
-                'City' => $admin['post_info'][0]['city'],
-                'State' => $admin['post_info'][0]['province'],
-                'Postcode' => $admin['post_info'][0]['zipcode'],
-                'Country' => $admin['post_info'][0]['country'],
-                'Phone Number' => $admin['phone'],
-                'Fax Number' => $admin['fax'],
+        $contacts = [
+            'admin' => $admin,
+            'tech' => $tech,
+            'billing' => $billing,
+        ];
+
+        $arr = [];
+        foreach ($contacts as $key => $contact) {
+            $arr[$key] = [
+                'Name' => is_array($contact) ? $contact['post_info'][0]['name'] : null,
+                'Company Name' => is_array($contact) ? $contact['post_info'][0]['organization'] : null,
+                'Email Address' => is_array($contact) ? $contact['email'] : null,
+                'Address 1' => is_array($contact) ? $contact['post_info'][0]['address'][0] : null,
+                'Address 2' => is_array($contact) ? $contact['post_info'][0]['address'][1] : null,
+                'City' => is_array($contact) ? $contact['post_info'][0]['city'] : null,
+                'State' => is_array($contact) ? $contact['post_info'][0]['province'] : null,
+                'Postcode' => is_array($contact) ? $contact['post_info'][0]['zipcode'] : null,
+                'Country' => is_array($contact) ? $contact['post_info'][0]['country'] : null,
+                'Phone Number' => is_array($contact) ? $contact['phone'] : null,
+                'Fax Number' => is_array($contact) ? $contact['fax'] : null,
             ];
-
-            if (array_key_exists(1, $admin['post_info'])) {
-                $adminArr['Chinese Name'] = $admin['post_info'][1]['name'];
-                $adminArr['TaiwanID'] = $admin['app_id'];
-                $adminArr['Chinese Company Name'] = $admin['post_info'][1]['organization'];
-                $adminArr['CompanyID'] = $admin['cmp_id'];
-                $adminArr['Chinese State'] = $admin['post_info'][1]['province'];
-                $adminArr['Chinese City'] = $admin['post_info'][1]['city'];
-                $adminArr['Chinese Address'] = $admin['post_info'][1]['address'][0];
+    
+            if (is_array($contact) && array_key_exists(1, $contact['post_info'])) {
+                $arr[$key]['Chinese Name'] = $contact['post_info'][1]['name'];
+                $arr[$key]['TaiwanID'] = $contact['app_id'];
+                $arr[$key]['Chinese Company Name'] = $contact['post_info'][1]['organization'];
+                $arr[$key]['CompanyID'] = $contact['cmp_id'];
+                $arr[$key]['Chinese State'] = $contact['post_info'][1]['province'];
+                $arr[$key]['Chinese City'] = $contact['post_info'][1]['city'];
+                $arr[$key]['Chinese Address'] = $contact['post_info'][1]['address'][0];
             }
-            $adminArr['Auth Code'] = $admin['auth_code'];
-        }
-
-        if (is_array($tech)) {
-            $techArr = [
-                'Name' => $tech['post_info'][0]['name'],
-                'Company Name' => $tech['post_info'][0]['organization'],
-                'Email Address' => $tech['email'],
-                'Address 1' => $tech['post_info'][0]['address'][0],
-                'Address 2' => $tech['post_info'][0]['address'][1],
-                'City' => $tech['post_info'][0]['city'],
-                'State' => $tech['post_info'][0]['province'],
-                'Postcode' => $tech['post_info'][0]['zipcode'],
-                'Country' => $tech['post_info'][0]['country'],
-                'Phone Number' => $tech['phone'],
-                'Fax Number' => $tech['fax'],
-            ];
-
-            if (array_key_exists(1, $tech['post_info'])) {
-                $techArr['Chinese Name'] = $tech['post_info'][1]['name'];
-                $techArr['TaiwanID'] = $tech['app_id'];
-                $techArr['Chinese Company Name'] = $tech['post_info'][1]['organization'];
-                $techArr['CompanyID'] = $tech['cmp_id'];
-                $techArr['Chinese State'] = $tech['post_info'][1]['province'];
-                $techArr['Chinese City'] = $tech['post_info'][1]['city'];
-                $techArr['Chinese Address'] = $tech['post_info'][1]['address'][0];
-            }
-            $techArr['Auth Code'] = $tech['auth_code'];
-        }
-
-        if (is_array($billing)) {
-            $billingArr = [
-                'Name' => $billing['post_info'][0]['name'],
-                'Company Name' => $billing['post_info'][0]['organization'],
-                'Email Address' => $billing['email'],
-                'Address 1' => $billing['post_info'][0]['address'][0],
-                'Address 2' => $billing['post_info'][0]['address'][1],
-                'City' => $billing['post_info'][0]['city'],
-                'State' => $billing['post_info'][0]['province'],
-                'Postcode' => $billing['post_info'][0]['zipcode'],
-                'Country' => $billing['post_info'][0]['country'],
-                'Phone Number' => $billing['phone'],
-                'Fax Number' => $billing['fax'],
-            ];
-
-            if (array_key_exists(1, $billing['post_info'])) {
-                $billingArr['Chinese Name'] = $billing['post_info'][1]['name'];
-                $billingArr['TaiwanID'] = $billing['app_id'];
-                $billingArr['Chinese Company Name'] = $billing['post_info'][1]['organization'];
-                $billingArr['CompanyID'] = $billing['cmp_id'];
-                $billingArr['Chinese State'] = $billing['post_info'][1]['province'];
-                $billingArr['Chinese City'] = $billing['post_info'][1]['city'];
-                $billingArr['Chinese Address'] = $billing['post_info'][1]['address'][0];
-            }
-            $billingArr['Auth Code'] = $billing['auth_code'];
+            $arr[$key]['Auth Code'] = is_array($contact) ? $contact['auth_code'] : null;
         }
 
         return [
             'Registrant' => $registrantArr,
-            'Technical' => $techArr,
-            'Billing' => $billingArr,
-            'Admin' => $adminArr,
+            'Technical' => $arr['tech'],
+            'Billing' => $arr['billing'],
+            'Admin' => $arr['admin'],
         ];
     }
 }
@@ -729,14 +688,14 @@ function twnicepp_SaveContactDetails($params)
                     $info['app_id'] = $contactDetails[$val]['TaiwanID'];
                     $info['cmp_id'] = $contactDetails[$val]['CompanyID'];
                 }
-            }
 
-            try {
-                $response = $api->call('Update Whois Information', $info);
-            } catch (\Exception $e) {
-                return array(
-                    'error' => $e->getMessage(),
-                );
+                try {
+                    $response = $api->call('Update Whois Information', $info);
+                } catch (\Exception $e) {
+                    return array(
+                        'error' => $e->getMessage(),
+                    );
+                }
             }
         }
 
