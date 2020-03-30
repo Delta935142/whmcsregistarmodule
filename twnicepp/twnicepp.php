@@ -173,7 +173,7 @@ function twnicepp_RegisterDomain($params)
         'years' => $registrationPeriod,
         'nameservers' => $nameservers,
         'auth_code' => $authCode,
-        'lang' => (strpos($params['tld'], '台灣')) ? 'ZH' : 'EN',
+        'lang' => (strstr($params['tld'], '台灣')) ? 'ZH' : 'EN',
         'registrant' => $registrantId,
         'admincontact' => $adminId,
         'techcontact' => $techId,
