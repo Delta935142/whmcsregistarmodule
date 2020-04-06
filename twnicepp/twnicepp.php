@@ -15,12 +15,12 @@ if (!defined("WHMCS")) {
 use WHMCS\Domains\DomainLookup\ResultsList;
 use WHMCS\Domains\DomainLookup\SearchResult;
 use WHMCS\Module\Registrar\Twnicepp\ApiClient;
+use WHMCS\Database\Capsule;
 
 // Require any libraries needed for the module to function.
 // require_once __DIR__ . '/path/to/library/loader.php';
 //
 // Also, perform any initialization required by the service's library.
-
 /**
  * Define module related metadata
  *
@@ -102,7 +102,7 @@ function twnicepp_RegisterDomain($params)
     $sld = $params['sld'];
     $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
     $registrationPeriod = $params['regperiod'];
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
     // Nameservers
     $nameservers = [];
     if ($params['ns1'] && gethostbyname($params['ns1']) != $params['ns1']) array_push($nameservers, $params['ns1']);
@@ -184,7 +184,7 @@ function twnicepp_RegisterDomain($params)
 
     if (!is_array($registrantId) && $registrantId) {
         $domainCreateUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
-        $domainUpdateUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
+
         try {
             $api = new ApiClient();
             $api->setUrl($domainCreateUrl);
@@ -200,8 +200,7 @@ function twnicepp_RegisterDomain($params)
                     'client_transfer_prohibited' => 'true',
                 ];
 
-                $api->setUrl($domainUpdateUrl);
-                $api->call('Update Domain', $putfields);
+                domainUpdata($testMode, $putfields);
 
                 $result['success'] = true;
             } else {
@@ -214,6 +213,28 @@ function twnicepp_RegisterDomain($params)
                 'error' => $e->getMessage(),
             );
         }
+    }
+}
+
+/**
+ * Domain Update
+ *
+ * @param [type] $testMode
+ * @param array $info
+ * @return void
+ */
+function domainUpdata($testMode, $info = [])
+{
+    $domainUpdateUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
+
+    try {
+        $api = new ApiClient();
+        $api->setUrl($domainUpdateUrl);
+        $api->call('Update Domain', $info);
+    } catch (\Exception $e) {
+        return array(
+            'error' => $e->getMessage(),
+        );
     }
 }
 
@@ -497,76 +518,157 @@ function twnicepp_GetContactDetails($params)
     $tld = $params['tld'];
 
     // Build post data
+    $client = Capsule::table('tblclients')->where('id', $params['userid'])->first();
+    $customfields = Capsule::table('tblcustomfieldsvalues')->where('relid', $params['userid'])->get();
+
+    $registrantArr = [
+        'Name' => "{$client->firstname} {$client->lastname}",
+        'Company Name' => $client->companyname,
+        'Email Address' => $client->email,
+        'Address 1' => $client->address1,
+        'Address 2' => $client->address2,
+        'City' => $client->city,
+        'State' => $client->state,
+        'Postcode' => $client->postcode,
+        'Country' => $client->country,
+        'Phone Number' => $client->phonenumber,
+        'Fax Number' => $client->fax,
+    ];
+
+    if (count($customfields)) {
+        $registrantArr['Chinese Name'] = $customfields[0]->value;
+        $registrantArr['TaiwanID'] = $customfields[1]->value;
+        $registrantArr['Chinese Company Name'] = $customfields[2]->value;
+        $registrantArr['CompanyID'] = $customfields[3]->value;
+        $registrantArr['Chinese State'] = $customfields[4]->value;
+        $registrantArr['Chinese City'] = $customfields[5]->value;
+        $registrantArr['Chinese Address'] = $customfields[6]->value;
+    }
+
     $response = getDomainInfo($userToken, $testMode, $sld.'.'.$tld) ?? [];
 
     if (!array_key_exists('error', $response)) {
         $registrant = getContactInfo($userToken, $testMode, $response['registrant']);
-        $registrantArr = [
-            'Name' => $registrant['post_info'][0]['name'],
-            'Company Name' => $registrant['post_info'][0]['organization'],
-            'Email Address' => $registrant['email'],
-            'Address 1' => $registrant['post_info'][0]['address'][0],
-            'Address 2' => $registrant['post_info'][0]['address'][1],
-            'City' => $registrant['post_info'][0]['city'],
-            'State' => $registrant['post_info'][0]['province'],
-            'Postcode' => $registrant['post_info'][0]['zipcode'],
-            'Country' => $registrant['post_info'][0]['country'],
-            'Phone Number' => $registrant['phone'],
-            'Fax Number' => $registrant['fax'],
-        ];
-
-        if (array_key_exists(1, $registrant['post_info'])) {
-            $registrantArr['Chinese Name'] = $registrant['post_info'][1]['name'];
-            $registrantArr['TaiwanID'] = $registrant['app_id'];
-            $registrantArr['Chinese Company Name'] = $registrant['post_info'][1]['organization'];
-            $registrantArr['CompanyID'] = $registrant['cmp_id'];
-            $registrantArr['Chinese State'] = $registrant['post_info'][1]['province'];
-            $registrantArr['Chinese City'] = $registrant['post_info'][1]['city'];
-            $registrantArr['Chinese Address'] = $registrant['post_info'][1]['address'][0];
-        }
-        $registrantArr['Auth Code'] = $registrant['auth_code'];
-
-        $admin = null;
-        $tech = null;
-        $billing = null;
-        foreach ($response['contacts'] as $contact) {
-            if (strstr($contact, 'admin')) $admin = getContactInfo($userToken, $testMode, explode(':', $contact)[1]);
-            if (strstr($contact, 'tech')) $tech = getContactInfo($userToken, $testMode, explode(':', $contact)[1]);
-            if (strstr($contact, 'billing')) $billing = getContactInfo($userToken, $testMode, explode(':', $contact)[1]);
-        }
-
-        $contacts = [
-            'admin' => $admin,
-            'tech' => $tech,
-            'billing' => $billing,
-        ];
-
-        $arr = [];
-        foreach ($contacts as $key => $contact) {
-            $arr[$key] = [
-                'Name' => is_array($contact) ? $contact['post_info'][0]['name'] : null,
-                'Company Name' => is_array($contact) ? $contact['post_info'][0]['organization'] : null,
-                'Email Address' => is_array($contact) ? $contact['email'] : null,
-                'Address 1' => is_array($contact) ? $contact['post_info'][0]['address'][0] : null,
-                'Address 2' => is_array($contact) ? $contact['post_info'][0]['address'][1] : null,
-                'City' => is_array($contact) ? $contact['post_info'][0]['city'] : null,
-                'State' => is_array($contact) ? $contact['post_info'][0]['province'] : null,
-                'Postcode' => is_array($contact) ? $contact['post_info'][0]['zipcode'] : null,
-                'Country' => is_array($contact) ? $contact['post_info'][0]['country'] : null,
-                'Phone Number' => is_array($contact) ? $contact['phone'] : null,
-                'Fax Number' => is_array($contact) ? $contact['fax'] : null,
-            ];
     
-            if (is_array($contact) && array_key_exists(1, $contact['post_info'])) {
-                $arr[$key]['Chinese Name'] = $contact['post_info'][1]['name'];
-                $arr[$key]['TaiwanID'] = $contact['app_id'];
-                $arr[$key]['Chinese Company Name'] = $contact['post_info'][1]['organization'];
-                $arr[$key]['CompanyID'] = $contact['cmp_id'];
-                $arr[$key]['Chinese State'] = $contact['post_info'][1]['province'];
-                $arr[$key]['Chinese City'] = $contact['post_info'][1]['city'];
-                $arr[$key]['Chinese Address'] = $contact['post_info'][1]['address'][0];
+        if ($registrant) {
+            $registrantArr = [
+                'Name' => $registrant['post_info'][0]['name'],
+                'Company Name' => $registrant['post_info'][0]['organization'],
+                'Email Address' => $registrant['email'],
+                'Address 1' => $registrant['post_info'][0]['address'][0],
+                'Address 2' => $registrant['post_info'][0]['address'][1],
+                'City' => $registrant['post_info'][0]['city'],
+                'State' => $registrant['post_info'][0]['province'],
+                'Postcode' => $registrant['post_info'][0]['zipcode'],
+                'Country' => $registrant['post_info'][0]['country'],
+                'Phone Number' => $registrant['phone'],
+                'Fax Number' => $registrant['fax'],
+            ];
+
+            if (array_key_exists(1, $registrant['post_info'])) {
+                $registrantArr['Chinese Name'] = $registrant['post_info'][1]['name'];
+                $registrantArr['TaiwanID'] = $registrant['app_id'];
+                $registrantArr['Chinese Company Name'] = $registrant['post_info'][1]['organization'];
+                $registrantArr['CompanyID'] = $registrant['cmp_id'];
+                $registrantArr['Chinese State'] = $registrant['post_info'][1]['province'];
+                $registrantArr['Chinese City'] = $registrant['post_info'][1]['city'];
+                $registrantArr['Chinese Address'] = $registrant['post_info'][1]['address'][0];
             }
-            $arr[$key]['Auth Code'] = is_array($contact) ? $contact['auth_code'] : null;
+
+
+            $admin = null;
+            $tech = null;
+            $billing = null;
+            foreach ($response['contacts'] as $contact) {
+                if (strstr($contact, 'admin')) $admin = getContactInfo($userToken, $testMode, explode(':', $contact)[1]);
+                if (strstr($contact, 'tech')) $tech = getContactInfo($userToken, $testMode, explode(':', $contact)[1]);
+                if (strstr($contact, 'billing')) $billing = getContactInfo($userToken, $testMode, explode(':', $contact)[1]);
+            }
+
+            $contacts = [
+                'admin' => $admin,
+                'tech' => $tech,
+                'billing' => $billing,
+            ];
+
+            $arr = [];
+            foreach ($contacts as $key => $contact) {
+                $arr[$key] = [
+                    'Name' => is_array($contact) ? $contact['post_info'][0]['name'] : null,
+                    'Company Name' => is_array($contact) ? $contact['post_info'][0]['organization'] : null,
+                    'Email Address' => is_array($contact) ? $contact['email'] : null,
+                    'Address 1' => is_array($contact) ? $contact['post_info'][0]['address'][0] : null,
+                    'Address 2' => is_array($contact) ? $contact['post_info'][0]['address'][1] : null,
+                    'City' => is_array($contact) ? $contact['post_info'][0]['city'] : null,
+                    'State' => is_array($contact) ? $contact['post_info'][0]['province'] : null,
+                    'Postcode' => is_array($contact) ? $contact['post_info'][0]['zipcode'] : null,
+                    'Country' => is_array($contact) ? $contact['post_info'][0]['country'] : null,
+                    'Phone Number' => is_array($contact) ? $contact['phone'] : null,
+                    'Fax Number' => is_array($contact) ? $contact['fax'] : null,
+                ];
+        
+                if (is_array($contact) && array_key_exists(1, $contact['post_info'])) {
+                    $arr[$key]['Chinese Name'] = $contact['post_info'][1]['name'];
+                    $arr[$key]['TaiwanID'] = $contact['app_id'];
+                    $arr[$key]['Chinese Company Name'] = $contact['post_info'][1]['organization'];
+                    $arr[$key]['CompanyID'] = $contact['cmp_id'];
+                    $arr[$key]['Chinese State'] = $contact['post_info'][1]['province'];
+                    $arr[$key]['Chinese City'] = $contact['post_info'][1]['city'];
+                    $arr[$key]['Chinese Address'] = $contact['post_info'][1]['address'][0];
+                }
+            }
+        } else {
+            $registarArr = [
+                'name' => $registrantArr['Name'],
+                'email' => $registrantArr['Email Address'],
+                'phone' => $registrantArr['Phone Number'],
+                'organization' => $registrantArr['Company Name'],
+                'address1' => $registrantArr['Address 1'],
+                'address2' => $registrantArr['Address 2'],
+                'zipcode' => $registrantArr['Postcode'],
+                'city' => $registrantArr['City'],
+                'country' => $registrantArr['Country'],
+                'province' => $registrantArr['State'],
+                'fax' => $registrantArr['Fax Number'],
+            ];
+
+            if (count($customfields)) {
+                $registarArr['c_name'] = $registrantArr['Chinese Name'];
+                $registarArr['app_id'] = $registrantArr['TaiwanID'];
+                $registarArr['c_organization'] = $registrantArr['Chinese Company Name'];
+                $registarArr['cmp_id'] = $registrantArr['CompanyID'];
+                $registarArr['c_province'] = $registrantArr['Chinese State'];
+                $registarArr['c_city'] = $registrantArr['Chinese City'];
+                $registarArr['c_address'] = $registrantArr['Chinese Address'];
+            }
+
+            $registrantId = createContact($userToken, $testMode, $registarArr);
+            $adminId = createContact($userToken, $testMode, $registarArr);
+            $techId = createContact($userToken, $testMode, $registarArr);
+            $billingId = createContact($userToken, $testMode, $registarArr);
+
+            if ($registrantId) {
+                $putfields = [
+                    'api_token' => $userToken,
+                    'domain' => "{$sld}.{$tld}",
+                    '_method' => 'PUT',
+                    'registrant' => $registrantId,
+                    'admincontact' => $adminId,
+                    'techcontact' => $techId,
+                    'billingcontact' => $billingId,
+                    'client_delete_prohibited' => 'true',
+                    'client_transfer_prohibited' => 'true',
+                ];
+
+                domainUpdata($testMode, $putfields);
+            }
+            
+
+            $arr = [
+                'tech' => $registrantArr,
+                'billing' => $registrantArr,
+                'admin' => $registrantArr
+            ];
         }
 
         return [
@@ -678,7 +780,6 @@ function twnicepp_SaveContactDetails($params)
                     'country' => $contactDetails[$val]['Country'], 
                     'province' => $contactDetails[$val]['State'],
                     'fax' => $contactDetails[$val]['Fax Number'],
-                    'auth_code' => $contactDetails[$val]['Auth Code'],
                 ];
         
                 if (array_key_exists('Chinese Name', $contactDetails[$val])) {
