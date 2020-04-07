@@ -9,10 +9,46 @@ namespace WHMCS\Module\Registrar\Twnicepp;
  */
 class ApiClient
 {
-    //const API_URL = 'https://www.example.com/api/1.0/';
+    const domainCreateUrl = '';
+    const domainUpdateUrl = '';
+    const domainInfoUrl = '';
+    const domainDeleteUrl = '';
+    const domainRenewUrl = '';
+    const domainTransferRequestUrl = '';
+    const domainTransferApproveUrl = '';
+    const contactCreateUrl = '';
+    const contactInfoUrl = '';
+    const contactUpdateUrl = '';
+    const hostCreateUrl = '';
+    const hostCheckUrl = '';
+    const hostInfoUrl = '';
+    const hostUpdateUrl = '';
+    const hostDeleteUrl = '';
+
+    //Dev
+    const domainCreateUrlDev = 'http://dev.dcitn.com/api/domains';
+    const domainUpdateUrlDev = 'http://dev.dcitn.com/api/domains';
+    const domainInfoUrlDev = 'http://dev.dcitn.com/api/domains/show';
+    const domainDeleteUrlDev = 'http://dev.dcitn.com/api/domains';
+    const domainRenewUrlDev = 'http://dev.dcitn.com/api/domains/renew';
+    const domainTransferRequestUrlDev = 'http://dev.dcitn.com/api/domains/transfer-request';
+    const domainTransferApproveUrlDev = 'http://dev.dcitn.com/api/domains/transfer-approve';
+    const contactCreateUrlDev = 'http://dev.dcitn.com/api/contacts';
+    const contactInfoUrlDev = 'http://dev.dcitn.com/api/contacts/show';
+    const contactUpdateUrlDev = 'http://dev.dcitn.com/api/contacts';
+    const hostCreateUrlDev = 'http://dev.dcitn.com/api/hosts';
+    const hostCheckUrlDev = 'http://dev.dcitn.com/api/hosts';
+    const hostInfoUrlDev = 'http://dev.dcitn.com/api/hosts/show';
+    const hostUpdateUrlDev = 'http://dev.dcitn.com/api/hosts';
+    const hostDeleteUrlDev = 'http://dev.dcitn.com/api/hosts';
 
     protected $results = [];
-    protected $apiUrl;
+    protected $testMode;
+
+    public function __construct($testMode = null)
+    {
+        $this->testMode = $testMode;
+    }
 
     /**
      * Make external API call to registrar API.
@@ -27,9 +63,11 @@ class ApiClient
      */
     public function call($action, $postfields, $method = 'POST')
     {
+        $apiUrl = $this->setUrl($action);
+        if ($method == 'GET') $apiUrl = $apiUrl.$postfields;
+
         $ch = curl_init();
-        //curl_setopt($ch, CURLOPT_URL, self::API_URL . $action);
-        curl_setopt($ch, CURLOPT_URL, $this->apiUrl);
+        curl_setopt($ch, CURLOPT_URL, $apiUrl);
         
         if ($method == 'POST') {
             curl_setopt($ch, CURLOPT_POST, 1);
@@ -95,11 +133,116 @@ class ApiClient
     /**
      * 設定網址
      *
-     * @param [type] $url
+     * @param [type] $action
      * @return void
      */
-    public function setUrl($url)
+    public function setUrl($action)
     {
-        $this->apiUrl = $url;
+        if ($this->testMode) return $this->dev($action);
+
+        switch ($action) {
+            case 'domainCreate':
+                return self::domainCreateUrl;
+                break;
+            case 'domainUpdate':
+                return self::domainUpdateUrl;
+                break;
+            case 'domainInfo':
+                return self::domainInfoUrl;
+                break;
+            case 'domainDelete':
+                return self::domainDeleteUrl;
+                break;
+            case 'domainRenew':
+                return self::domainRenewUrl;
+                break;
+            case 'domainTransferRequest':
+                return self::domainTransferRequestUrl;
+                break;
+            case 'domainTransferApprove':
+                return self::domainTransferApproveUrl;
+                break;
+            case 'contactCreate':
+                return self::contactCreateUrl;
+                break;
+            case 'contactInfo':
+                return self::contactInfoUrl;
+                break;
+            case 'contactUpdate':
+                return self::contactUpdateUrl;
+                break;
+            case 'hostCreate':
+                return self::hostCreateUrl;
+                break;
+            case 'hostCheck':
+                return self::hostCheckUrl;
+                break;
+            case 'hostInfo':
+                return self::hostInfoUrl;
+                break;
+            case 'hostUpdate':
+                return self::hostUpdateUrl;
+                break;
+            case 'hostDelete':
+                return self::hostDeleteUrl;
+                break;
+        }
+    }
+
+    /**
+     * 開發模式
+     *
+     * @param [type] $action
+     * @return void
+     */
+    protected function dev($action)
+    {
+        switch ($action) {
+            case 'domainCreate':
+                return self::domainCreateUrlDev;
+                break;
+            case 'domainUpdate':
+                return self::domainUpdateUrlDev;
+                break;
+            case 'domainInfo':
+                return self::domainInfoUrlDev;
+                break;
+            case 'domainDelete':
+                return self::domainDeleteUrlDev;
+                break;
+            case 'domainRenew':
+                return self::domainRenewUrlDev;
+                break;
+            case 'domainTransferRequest':
+                return self::domainTransferRequestUrlDev;
+                break;
+            case 'domainTransferApprove':
+                return self::domainTransferApproveUrlDev;
+                break;
+            case 'contactCreate':
+                return self::contactCreateUrlDev;
+                break;
+            case 'contactInfo':
+                return self::contactInfoUrlDev;
+                break;
+            case 'contactUpdate':
+                return self::contactUpdateUrlDev;
+                break;
+            case 'hostCreate':
+                return self::hostCreateUrlDev;
+                break;
+            case 'hostCheck':
+                return self::hostCheckUrlDev;
+                break;
+            case 'hostInfo':
+                return self::hostInfoUrlDev;
+                break;
+            case 'hostUpdate':
+                return self::hostUpdateUrlDev;
+                break;
+            case 'hostDelete':
+                return self::hostDeleteUrlDev;
+                break;
+        }
     }
 }

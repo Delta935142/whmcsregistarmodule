@@ -183,12 +183,9 @@ function twnicepp_RegisterDomain($params)
     ];
 
     if (!is_array($registrantId) && $registrantId) {
-        $domainCreateUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
-
         try {
-            $api = new ApiClient();
-            $api->setUrl($domainCreateUrl);
-            $response = $api->call('Create Domain', $postfields);
+            $api = new ApiClient($testMode);
+            $response = $api->call('domainCreate', $postfields);
 
             $result = [];
             if ($response['result']) {
@@ -225,12 +222,9 @@ function twnicepp_RegisterDomain($params)
  */
 function domainUpdata($testMode, $info = [])
 {
-    $domainUpdateUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
-
     try {
-        $api = new ApiClient();
-        $api->setUrl($domainUpdateUrl);
-        $api->call('Update Domain', $info);
+        $api = new ApiClient($testMode);
+        $api->call('domainUpdate', $info);
     } catch (\Exception $e) {
         return array(
             'error' => $e->getMessage(),
@@ -248,13 +242,11 @@ function domainUpdata($testMode, $info = [])
  */
 function createContact($userToken, $testMode, $info = [])
 {
-    $contactCreateUrl = ($testMode) ? 'http://dev.dcitn.com/api/contacts' : 'http://dcitn.com/api/contacts';
     $info['api_token'] = $userToken;
 
     try {
-        $api = new ApiClient();
-        $api->setUrl($contactCreateUrl);
-        $response = $api->call('Create Contact', $info);
+        $api = new ApiClient($testMode);
+        $response = $api->call('contactCreate', $info);
 
         return $response['result'] ? $response['message']['contactId'] : null;
     } catch (\Exception $e) {
@@ -307,12 +299,9 @@ function twnicepp_TransferDomain($params)
         'nameservers' => $nameservers,
     ];
 
-    $domainTransferRequestUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains/transfer-request' : 'http://dcitn.com/api/domains/transfer-request';
-
     try {
-        $api = new ApiClient();
-        $api->setUrl($domainTransferRequestUrl);
-        $response = $api->call('Domain Transfer Request', $postfields);
+        $api = new ApiClient($testMode);
+        $response = $api->call('domainTransferRequest', $postfields);
 
         return $response['result'] ? "{$sld}.{$tld} 轉入請求已送出" : "{$sld}.{$tld} 轉入請求失敗";
     } catch (\Exception $e) {
@@ -355,13 +344,10 @@ function twnicepp_RenewDomain($params)
         'domain' => "{$sld}.{$tld}",
         'period' => $registrationPeriod,
     );
-
-    $domainRenewUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains/renew' : 'http://dcitn.com/api/domains/renew';
     
     try {
-        $api = new ApiClient();
-        $api->setUrl($domainRenewUrl);
-        $response = $api->call('Domain Renew', $postfields);
+        $api = new ApiClient($testMode);
+        $response = $api->call('domainRenew', $postfields);
 
         $result = [];
         if ($response['result']) {
@@ -454,11 +440,9 @@ function twnicepp_SaveNameservers($params)
             'nameservers' => $nameservers,
         ];
 
-        $domainUpdateUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
         try {
-            $api = new ApiClient();
-            $api->setUrl($domainUpdateUrl);
-            $response = $api->call('Domain SetNameservers', $putfields);
+            $api = new ApiClient($testMode);
+            $response = $api->call('domainUpdate', $putfields);
 
             return $response['result'] ? 'Nameserver 更新完成' : 'Nameserver 更新失敗';
         } catch (\Exception $e) {
@@ -480,12 +464,10 @@ function twnicepp_SaveNameservers($params)
 function getDomainInfo($userToken, $testMode, $domain)
 {
     $getfields = '?api_token='.$userToken.'&domain='.$domain;
-    $domainInfoUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains/show'.$getfields : 'http://dcitn.com/api/domains/show'.$getfields;
 
     try {
-        $api = new ApiClient();
-        $api->setUrl($domainInfoUrl);
-        $response = $api->call('Domain Info', [], 'GET');
+        $api = new ApiClient($testMode);
+        $response = $api->call('domainInfo', $getfields, 'GET');
 
         return $response['result'] ? $response['message'] : null;
     } catch (\Exception $e) {
@@ -691,12 +673,10 @@ function twnicepp_GetContactDetails($params)
 function getContactInfo($userToken, $testMode, $contactId)
 {
     $getfields = '?api_token='.$userToken.'&contact_id='.$contactId;
-    $contactInfoUrl = ($testMode) ? 'http://dev.dcitn.com/api/contacts/show'.$getfields : 'http://dcitn.com/api/contacts/show'.$getfields;
 
     try {
-        $api = new ApiClient();
-        $api->setUrl($contactInfoUrl);
-        $response = $api->call('Contact Info', [], 'GET');
+        $api = new ApiClient($testMode);
+        $response = $api->call('contactInfo', $getfields, 'GET');
 
         return $response['result'] ? $response['message'] : null;
     } catch (\Exception $e) {
@@ -757,11 +737,6 @@ function twnicepp_SaveContactDetails($params)
         'billing' => $billing,
     ];
 
-    $contactUpdateUrl = ($testMode) ? 'http://dev.dcitn.com/api/contacts' : 'http://dcitn.com/api/contacts';
-
-    $api = new ApiClient();
-    $api->setUrl($contactUpdateUrl);
-
     if (!array_key_exists('error', $response)) {
         foreach ($types as $key => $val) {
             if ($contacts[$key]) {
@@ -793,7 +768,8 @@ function twnicepp_SaveContactDetails($params)
                 }
 
                 try {
-                    $response = $api->call('Update Whois Information', $info);
+                    $api = new ApiClient($testMode);
+                    $response = $api->call('contactUpdate', $info);
                 } catch (\Exception $e) {
                     return array(
                         'error' => $e->getMessage(),
@@ -1075,11 +1051,9 @@ function twnicepp_SaveRegistrarLock($params)
         'client_transfer_prohibited' => ($lockStatus == 'locked') ? 'true' : 'false',
     );
 
-    $domainUpdateUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
     try {
-        $api = new ApiClient();
-        $api->setUrl($domainUpdateUrl);
-        $response = $api->call('Domain TransferLock', $putfields);
+        $api = new ApiClient($testMode);
+        $response = $api->call('domainUpdate', $putfields);
 
         return $response['result'] ? "{$sld}.{$tld} 更新完成" : "{$sld}.{$tld} 更新失敗";
 
@@ -1228,7 +1202,7 @@ function twnicepp_IDProtectToggle($params)
     );
 
     try {
-        $api = new ApiClient();
+        $api = new ApiClient($testMode);
 
         if ($protectEnable) {
             $api->call('EnableIDProtection', $postfields);
@@ -1315,11 +1289,9 @@ function twnicepp_ReleaseDomain($params)
         'domain' => "{$sld}.{$tld}",
     );
 
-    $domainTransferApproveUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains/transfer-approve' : 'http://dcitn.com/api/domains/transfer-approve';
     try {
-        $api = new ApiClient();
-        $api->setUrl($domainTransferApproveUrl);
-        $response = $api->call('Domain Transfer Approve', $postfields);
+        $api = new ApiClient($testMode);
+        $response = $api->call('domainTransferApprove', $postfields);
 
         return $response['result'] ? ['success' => 'success'] : ['error' => '網域轉移同意失敗'];
 
@@ -1356,11 +1328,9 @@ function twnicepp_RequestDelete($params)
         '_method' => 'DELETE',
     );
 
-    $domainDeleteUrl = ($testMode) ? 'http://dev.dcitn.com/api/domains' : 'http://dcitn.com/api/domains';
     try {
-        $api = new ApiClient();
-        $api->setUrl($domainDeleteUrl);
-        $response = $api->call('Delete Domain', $postfields);
+        $api = new ApiClient($testMode);
+        $response = $api->call('domainDelete', $postfields);
 
         return $response['result'] ? ['success' => true] : ['error' => '網域刪除失敗'];
 
@@ -1396,12 +1366,12 @@ function twnicepp_RegisterNameserver($params)
     $nameserver = $params['nameserver'];
     $ipAddress = $params['ipaddress'];
 
-    $hostUrl = ($testMode) ? 'http://dev.dcitn.com/api/hosts?nameservers='.$nameserver.'&api_token='.$userToken : 'http://dcitn.com/api/hosts?nameserver='.$nameserver.'&api_token='.$userToken;
-    
-    $api = new ApiClient();
+    $getfields = '?nameservers='.$nameserver.'&api_token='.$userToken;
+
+    $api = new ApiClient($testMode);
+
     try {
-        $api->setUrl($hostUrl);
-        $response = $api->call('Check Nameserver', [], 'GET');
+        $response = $api->call('hostCheck', $getfields, 'GET');
 
         if ($response['result'] && $response['message']['message'][0]['exist']) return ['error' => 'Nameserver 已經存在'];
 
@@ -1418,10 +1388,8 @@ function twnicepp_RegisterNameserver($params)
         'ip_address' => $ipAddress,
     );
 
-    $HostCreateUrl = ($testMode) ? 'http://dev.dcitn.com/api/hosts' : 'http://dcitn.com/api/hosts';
     try {
-        $api->setUrl($HostCreateUrl);
-        $response = $api->call('RegisterNameserver', $postfields);
+        $response = $api->call('hostCreate', $postfields);
 
         return $response['result'] ? ['success' => true] : ['error' => 'Nameserver 註冊失敗'];
 
@@ -1458,12 +1426,12 @@ function twnicepp_ModifyNameserver($params)
     $currentIpAddress = $params['currentipaddress'];
     $newIpAddress = $params['newipaddress'];
 
-    $hostInfoUrl = ($testMode) ? 'http://dev.dcitn.com/api/hosts/show?nameserver='.$nameserver.'&api_token='.$userToken : 'http://dcitn.com/api/hosts/show?nameserver='.$nameserver.'&api_token='.$userToken;
-    $api = new ApiClient();
-    try {
-        $api->setUrl($hostInfoUrl);
-        $response = $api->call('Get Nameserver', [], 'GET');
+    $getfields = '?nameservers='.$nameserver.'&api_token='.$userToken;
 
+    $api = new ApiClient($testMode);
+
+    try {
+        $response = $api->call('hostInfo', $getfields, 'GET');
         $oldIp = $response['result'] ? array_keys($response['message']['ip'])[0] : null;
 
     } catch (\Exception $e) {
@@ -1483,10 +1451,8 @@ function twnicepp_ModifyNameserver($params)
         '_method' => 'PUT',
     );
 
-    $hostUpdateUrl = ($testMode) ? 'http://dev.dcitn.com/api/hosts' : 'http://dcitn.com/api/hosts';
     try {
-        $api->setUrl($hostUpdateUrl);
-        $response = $api->call('ModifyNameserver', $postfields);
+        $response = $api->call('hostUpdate', $postfields);
 
         return $response['result'] ? ['success' => true] : ['error' => 'Nameserver 更新失敗'];
 
@@ -1519,12 +1485,12 @@ function twnicepp_DeleteNameserver($params)
     // nameserver parameters
     $nameserver = $params['nameserver'];
 
-    $hostUrl = ($testMode) ? 'http://dev.dcitn.com/api/hosts?nameservers='.$nameserver.'&api_token='.$userToken : 'http://dcitn.com/api/hosts?nameserver='.$nameserver.'&api_token='.$userToken;
+    $getfields = '?nameservers='.$nameserver.'&api_token='.$userToken;
     
-    $api = new ApiClient();
+    $api = new ApiClient($testMode);
+
     try {
-        $api->setUrl($hostUrl);
-        $response = $api->call('Check Nameserver', [], 'GET');
+        $response = $api->call('hostCheck', $getfields, 'GET');
 
         if ($response['result'] && !$response['message']['message'][0]['exist']) return ['error' => 'Nameserver 不存在'];
 
@@ -1541,10 +1507,8 @@ function twnicepp_DeleteNameserver($params)
         '_method' => 'DELETE',
     );
 
-    $hostDeleteUrl = ($testMode) ? 'http://dev.dcitn.com/api/hosts' : 'http://dcitn.com/api/hosts';
     try {
-        $api->setUrl($hostDeleteUrl);
-        $api->call('DeleteNameserver', $postfields);
+        $api->call('hostDelete', $postfields);
 
         return $response['result'] ? ['success' => true] : ['error' => 'Nameserver 刪除失敗'];
 
@@ -1630,7 +1594,7 @@ function twnicepp_TransferSync($params)
     );
 
     try {
-        $api = new ApiClient();
+        $api = new ApiClient($testMode);
         $api->call('CheckDomainTransfer', $postfields);
 
         if ($api->getFromResponse('transfercomplete')) {
