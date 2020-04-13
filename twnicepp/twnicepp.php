@@ -390,8 +390,15 @@ function twnicepp_GetNameservers($params)
     $result = [];
     if (!array_key_exists('error', $response)) {
         foreach ($response['nameservers'] as $nameserver) {
-            $result[] = $nameserver;
+            $ns[] = $nameserver;
         }
+        $result = [
+            'ns1' => array_key_exists(0, $ns) ? $ns[0] : null,
+            'ns2' => array_key_exists(1, $ns) ? $ns[1] : null,
+            'ns3' => array_key_exists(2, $ns) ? $ns[2] : null,
+            'ns4' => array_key_exists(3, $ns) ? $ns[3] : null,
+            'ns5' => array_key_exists(4, $ns) ? $ns[4] : null,
+        ];
     } else {
         $result['error'] = "{$sld}.{$tld} 查詢 Nameserver 失敗";
     }
@@ -444,7 +451,7 @@ function twnicepp_SaveNameservers($params)
             $api = new ApiClient($testMode);
             $response = $api->call('domainUpdate', $putfields);
 
-            return $response['result'] ? 'Nameserver 更新完成' : 'Nameserver 更新失敗';
+            return $response['result'] ? ['success' => true] : ['error' => 'Nameserver 更新失敗'];
         } catch (\Exception $e) {
             return array(
                 'error' => $e->getMessage(),
