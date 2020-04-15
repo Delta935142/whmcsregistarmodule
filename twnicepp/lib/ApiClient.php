@@ -14,6 +14,7 @@ class ApiClient
     const domainInfoUrl = '';
     const domainDeleteUrl = '';
     const domainRenewUrl = '';
+    const domainTransferQueryUrl = '';
     const domainTransferRequestUrl = '';
     const domainTransferApproveUrl = '';
     const contactCreateUrl = '';
@@ -31,6 +32,7 @@ class ApiClient
     const domainInfoUrlDev = 'http://dev.dcitn.com/api/domains/show';
     const domainDeleteUrlDev = 'http://dev.dcitn.com/api/domains';
     const domainRenewUrlDev = 'http://dev.dcitn.com/api/domains/renew';
+    const domainTransferQueryUrlDev = 'http://dev.dcitn.com/api/domains/transfer';
     const domainTransferRequestUrlDev = 'http://dev.dcitn.com/api/domains/transfer-request';
     const domainTransferApproveUrlDev = 'http://dev.dcitn.com/api/domains/transfer-approve';
     const contactCreateUrlDev = 'http://dev.dcitn.com/api/contacts';
@@ -156,6 +158,9 @@ class ApiClient
             case 'domainRenew':
                 return self::domainRenewUrl;
                 break;
+            case 'domainTransferQuery':
+                return self::domainTransferQueryUrl;
+                break;
             case 'domainTransferRequest':
                 return self::domainTransferRequestUrl;
                 break;
@@ -212,6 +217,9 @@ class ApiClient
                 break;
             case 'domainRenew':
                 return self::domainRenewUrlDev;
+                break;
+            case 'domainTransferQuery':
+                return self::domainTransferQueryUrlDev;
                 break;
             case 'domainTransferRequest':
                 return self::domainTransferRequestUrlDev;

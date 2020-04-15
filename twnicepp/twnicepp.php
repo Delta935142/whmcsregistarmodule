@@ -280,7 +280,7 @@ function twnicepp_TransferDomain($params)
 
     // registration parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
     $registrationPeriod = $params['regperiod'];
     $eppCode = $params['eppcode'];
 
@@ -335,7 +335,7 @@ function twnicepp_RenewDomain($params)
 
     // registration parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
     $registrationPeriod = $params['regperiod'];
 
     // Build post data.
@@ -383,7 +383,7 @@ function twnicepp_GetNameservers($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     $response = getDomainInfo($userToken, $testMode, $sld.'.'.$tld) ?? [];
 
@@ -426,7 +426,7 @@ function twnicepp_SaveNameservers($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     // submitted nameserver values
     $nameservers = [];
@@ -504,7 +504,7 @@ function twnicepp_GetContactDetails($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     // Build post data
     $client = Capsule::table('tblclients')->where('id', $params['userid'])->first();
@@ -714,7 +714,7 @@ function twnicepp_SaveContactDetails($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     // whois information
     $contactDetails = $params['contactdetails'];
@@ -1017,7 +1017,7 @@ function twnicepp_GetRegistrarLock($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     $response = getDomainInfo($userToken, $testMode, $sld.'.'.$tld) ?? [];
 
@@ -1045,7 +1045,7 @@ function twnicepp_SaveRegistrarLock($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     // lock status
     $lockStatus = $params['lockenabled'];
@@ -1092,7 +1092,7 @@ function twnicepp_GetDNS($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     // Build post data
     $postfields = array(
@@ -1145,7 +1145,7 @@ function twnicepp_SaveDNS($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     // dns record parameters
     $dnsrecords = $params['dnsrecords'];
@@ -1195,7 +1195,7 @@ function twnicepp_IDProtectToggle($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     // id protection parameter
     $protectEnable = (bool) $params['protectenable'];
@@ -1249,7 +1249,7 @@ function twnicepp_GetEPPCode($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     $response = getDomainInfo($userToken, $testMode, $sld.'.'.$tld) ?? [];
 
@@ -1285,7 +1285,7 @@ function twnicepp_ReleaseDomain($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     // transfer tag
     $transferTag = $params['transfertag'];
@@ -1326,7 +1326,7 @@ function twnicepp_RequestDelete($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     // Build post data
     $postfields = array(
@@ -1367,7 +1367,7 @@ function twnicepp_RegisterNameserver($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     // nameserver parameters
     $nameserver = $params['nameserver'];
@@ -1426,7 +1426,7 @@ function twnicepp_ModifyNameserver($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     // nameserver parameters
     $nameserver = $params['nameserver'];
@@ -1487,7 +1487,7 @@ function twnicepp_DeleteNameserver($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     // nameserver parameters
     $nameserver = $params['nameserver'];
@@ -1547,7 +1547,7 @@ function twnicepp_Sync($params)
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     $response = getDomainInfo($userToken, $testMode, $sld.'.'.$tld) ?? [];
 
@@ -1581,38 +1581,24 @@ function twnicepp_Sync($params)
 function twnicepp_TransferSync($params)
 {
     // user defined configuration values
-    $userIdentifier = $params['API Username'];
-    $apiKey = $params['API Key'];
-    $testMode = $params['Test Mode'];
-    $accountMode = $params['Account Mode'];
-    $emailPreference = $params['Email Preference'];
-    $additionalInfo = $params['Additional Information'];
+    $userToken = $params['APIToken'];
+    $testMode = $params['TestMode'];
 
     // domain parameters
     $sld = $params['sld'];
-    $tld = $params['tld'];
+    $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
 
     // Build post data
-    $postfields = array(
-        'username' => $userIdentifier,
-        'password' => $apiKey,
-        'testmode' => $testMode,
-        'domain' => $sld . '.' . $tld,
-    );
+    $getfields = '?domain='.$sld.'.'.$tld.'&api_token='.$userToken;
 
     try {
         $api = new ApiClient($testMode);
-        $api->call('CheckDomainTransfer', $postfields);
+        $response = $api->call('domainTransferQuery', $getfields, 'GET');
 
-        if ($api->getFromResponse('transfercomplete')) {
+        if ($response['result']) {
             return array(
                 'completed' => true,
-                'expirydate' => $api->getFromResponse('expirydate'), // Format: YYYY-MM-DD
-            );
-        } elseif ($api->getFromResponse('transferfailed')) {
-            return array(
-                'failed' => true,
-                'reason' => $api->getFromResponse('failurereason'), // Reason for the transfer failure if available
+                'expirydate' => date('Y-m-d', strtotime($response['message']['expdate'])), // Format: YYYY-MM-DD
             );
         } else {
             // No status change, return empty array
