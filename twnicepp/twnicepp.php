@@ -1380,7 +1380,7 @@ function twnicepp_RegisterNameserver($params)
     try {
         $response = $api->call('hostCheck', $getfields, 'GET');
 
-        if ($response['result'] && $response['message']['message'][0]['exist']) return ['error' => 'Nameserver 已經存在'];
+        if ($response['result'] && $response['message']['hosts'][0]['exist']) return ['error' => 'Nameserver 已經存在'];
 
     } catch (\Exception $e) {
         return array(
@@ -1499,7 +1499,7 @@ function twnicepp_DeleteNameserver($params)
     try {
         $response = $api->call('hostCheck', $getfields, 'GET');
 
-        if ($response['result'] && !$response['message']['message'][0]['exist']) return ['error' => 'Nameserver 不存在'];
+        if ($response['result'] && !$response['message']['hosts'][0]['exist']) return ['error' => 'Nameserver 不存在'];
 
     } catch (\Exception $e) {
         return array(
