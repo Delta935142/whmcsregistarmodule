@@ -206,10 +206,14 @@ function twnicepp_RegisterDomain($params)
 
             return $result;
         } catch (\Exception $e) {
-            return array(
+            return [
                 'error' => $e->getMessage(),
-            );
+            ];
         }
+    } else {
+        return [
+            'error' => "{$sld}.{$tld} 註冊失敗",
+        ];
     }
 }
 
@@ -745,6 +749,7 @@ function twnicepp_SaveContactDetails($params)
     ];
 
     if (!array_key_exists('error', $response)) {
+        $error = [];
         foreach ($types as $key => $val) {
             if ($contacts[$key]) {
                 $info = [
@@ -777,6 +782,7 @@ function twnicepp_SaveContactDetails($params)
                 try {
                     $api = new ApiClient($testMode);
                     $response = $api->call('contactUpdate', $info);
+                    if (!$response['result']) $error[$key] = '更新失敗';
                 } catch (\Exception $e) {
                     return array(
                         'error' => $e->getMessage(),
@@ -785,9 +791,17 @@ function twnicepp_SaveContactDetails($params)
             }
         }
 
-        return [
-            'success' => true
-        ];
+        if (count($error)) {
+            return [
+                'error' => json_encode($error)
+            ];
+        } else {
+            return [
+                'success' => true
+            ];
+        }
+
+        
     }
 
     return [
