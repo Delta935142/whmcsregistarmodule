@@ -147,20 +147,20 @@ function twnicepp_RegisterDomain($params)
 
     if (isset($params["customfields"]) && count($params["customfields"]) > 0) {
         $registarArr['c_name'] = $params["customfields"][0]['value'];
-        $registarArr['app_id'] = $params["customfields"][1]['value'];
-        $registarArr['c_organization'] = $params["customfields"][2]['value'];
-        $registarArr['cmp_id'] = $params["customfields"][3]['value'];
-        $registarArr['c_province'] = $params["customfields"][4]['value'];
-        $registarArr['c_city'] = $params["customfields"][5]['value'];
-        $registarArr['c_address'] = $params["customfields"][6]['value'];
+        $registarArr['app_id'] = $params["customfields"][2]['value'];
+        $registarArr['c_organization'] = $params["customfields"][5]['value'];
+        $registarArr['cmp_id'] = $params["customfields"][4]['value'];
+        $registarArr['c_province'] = $params["state"];
+        $registarArr['c_city'] = $params["city"];
+        $registarArr['c_address'] = $params["customfields"][3]['value'];
 
         $adminArr['c_name'] = $params["customfields"][0]['value'];
-        $adminArr['app_id'] = $params["customfields"][1]['value'];
-        $adminArr['c_organization'] = $params["customfields"][2]['value'];
-        $adminArr['cmp_id'] = $params["customfields"][3]['value'];
-        $adminArr['c_province'] = $params["customfields"][4]['value'];
-        $adminArr['c_city'] = $params["customfields"][5]['value'];
-        $adminArr['c_address'] = $params["customfields"][6]['value'];
+        $adminArr['app_id'] = $params["customfields"][2]['value'];
+        $adminArr['c_organization'] = $params["customfields"][5]['value'];
+        $adminArr['cmp_id'] = $params["customfields"][4]['value'];
+        $adminArr['c_province'] = $params["adminstate"];
+        $adminArr['c_city'] = $params["admincity"];
+        $adminArr['c_address'] = $params["customfields"][3]['value'];
     }
 
     $registrantId = createContact($userToken, $testMode, $registarArr);
