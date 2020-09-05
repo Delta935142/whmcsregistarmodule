@@ -287,6 +287,12 @@ function twnicepp_TransferDomain($params)
     $tld = $params['tld'] == 'tw(台灣)' ? 'tw' : $params['tld'];
     $registrationPeriod = $params['regperiod'];
     $eppCode = $params['eppcode'];
+	
+	if ($eppCode == '搶註') {
+		return [
+            'error' => '更新搶註資料',
+        ];
+	}
 
     $nameservers = [];
     if ($params['ns1']) array_push($nameservers, $params['ns1']);
@@ -306,8 +312,16 @@ function twnicepp_TransferDomain($params)
     try {
         $api = new ApiClient($testMode);
         $response = $api->call('domainTransferRequest', $postfields);
-
-        return $response['result'] ? "{$sld}.{$tld} 轉入請求已送出" : "{$sld}.{$tld} 轉入請求失敗";
+		
+		if ($response['result']) {
+			return [
+				'success' => true,
+			];
+		} else {
+			return [
+				'error' => "{$sld}.{$tld} 轉入請求失敗",
+			];
+		}
     } catch (\Exception $e) {
         return [
             'error' => $e->getMessage(),
@@ -453,7 +467,7 @@ function twnicepp_SaveNameservers($params)
 
         try {
             $api = new ApiClient($testMode);
-            $response = $api->call('domainUpdate', $putfields);
+            $response = $api->call('domainHosts', $putfields);
 
             return $response['result'] ? ['success' => true] : ['error' => 'Nameserver 更新失敗'];
         } catch (\Exception $e) {
@@ -793,7 +807,7 @@ function twnicepp_SaveContactDetails($params)
 
         if (count($error)) {
             return [
-                'error' => json_encode($error)
+                'error' => json_encode($error, JSON_UNESCAPED_UNICODE)
             ];
         } else {
             return [

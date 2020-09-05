@@ -12,6 +12,7 @@ class ApiClient
     const domainCreateUrl = '';
     const domainUpdateUrl = '';
     const domainInfoUrl = '';
+	const domainHostsUrl = '';
     const domainDeleteUrl = '';
     const domainRenewUrl = '';
     const domainTransferQueryUrl = '';
@@ -30,6 +31,7 @@ class ApiClient
     const domainCreateUrlDev = 'http://dev.dcitn.com/api/domains';
     const domainUpdateUrlDev = 'http://dev.dcitn.com/api/domains';
     const domainInfoUrlDev = 'http://dev.dcitn.com/api/domains/show';
+	const domainHostsUrlDev = 'http://dev.dcitn.com/api/domains/hosts';
     const domainDeleteUrlDev = 'http://dev.dcitn.com/api/domains';
     const domainRenewUrlDev = 'http://dev.dcitn.com/api/domains/renew';
     const domainTransferQueryUrlDev = 'http://dev.dcitn.com/api/domains/transfer';
@@ -152,6 +154,9 @@ class ApiClient
             case 'domainInfo':
                 return self::domainInfoUrl;
                 break;
+			case 'domainHosts':
+                return self::domainHostsUrl;
+                break;
             case 'domainDelete':
                 return self::domainDeleteUrl;
                 break;
@@ -211,6 +216,9 @@ class ApiClient
                 break;
             case 'domainInfo':
                 return self::domainInfoUrlDev;
+                break;
+			case 'domainHosts':
+                return self::domainHostsUrlDev;
                 break;
             case 'domainDelete':
                 return self::domainDeleteUrlDev;
