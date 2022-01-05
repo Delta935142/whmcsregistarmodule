@@ -172,7 +172,7 @@ function twnicepp_RegisterDomain($params)
     $postfields = [
         'api_token' => $userToken,
         'domain' => "{$sld}.{$tld}",
-        'years' => $registrationPeriod,
+        'period' => $registrationPeriod,
         'nameservers' => $nameservers,
         'auth_code' => $authCode,
         'lang' => (strstr($params['tld'], '台灣')) ? 'ZH' : 'EN',
